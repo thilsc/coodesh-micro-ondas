@@ -1,0 +1,8 @@
+bin/
+obj/
+Properties/
+*.user
+*.suo
+*.sln.docstates
+**/*.userosscache
+**/*.sln.ide/

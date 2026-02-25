@@ -1,0 +1,86 @@
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  margin-bottom: 60px;
+}
+
+.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
+  color: var(--bs-secondary-color);
+  text-align: end;
+}
+
+.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
+  text-align: start;
+}
+
+/*#display {
+    white-space: pre-wrap;
+    place-self: center;
+    text-align: center;
+    font-weight: bold;
+    font-size: x-large;
+}*/
+
+#display {
+  font-family: monospace; 
+  font-size: 2.5em; 
+  text-align: center;
+  min-height: 100px; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+#display:hover:not(:empty) {
+  transform: scale(1.02); 
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3); 
+}
+
+#display:empty {
+  display: none;
+  background: none;
+}
+
+#display:not(:empty):not([data-running="true"]) {
+  background: linear-gradient(45deg, #28a745, #20c997);
+}
+
+input:disabled { 
+  background: linear-gradient(90deg, #6c757d, #adb5bd); 
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+input:focus:enabled { 
+  border-color: #ff6b6b;
+  box-shadow: 0 0 15px rgba(255,107,107,0.4);
+  transform: scale(1.02);
+}
+
+.btn:not(:disabled):hover { 
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.btn:active { 
+  transform: translateY(0); 
+}

@@ -1,0 +1,54 @@
+﻿@model MicroondasViewModel
+@using MicroondasDigital.Models.Enums
+
+@{
+    ViewData["Title"] = "Micro-ondas Digital";
+}
+
+<h1>Micro-ondas Digital</h1>
+
+<form asp-action="Iniciar" method="post" class="mt-2">
+    <div class="mb-3">
+        <label>Tempo</label>
+        <input asp-for="Tempo" type="number" min="1" max="120" class="form-control" disabled="@Model.IsRunning" />
+        <span asp-validation-for="Tempo" class="text-danger ms-2"></span>
+    </div>
+    <div class="mb-3">
+        <label>Potência</label>
+        <input asp-for="Potencia" type="number" min="1" max="10" class="form-control" disabled="@Model.IsRunning" />
+        <span asp-validation-for="Potencia" class="text-danger ms-2"></span>
+    </div>
+    <button type="submit" class="btn btn-primary" disabled="@(ViewBag.StatusAtual as StatusAquecimento?  != StatusAquecimento.Parado)">
+        @(Model.IsPaused ? "Retomar" : "Iniciar")
+    </button>
+</form>
+
+<form asp-action="InicioRapido" method="post" class="mt-2">
+    <button type="submit" class="btn btn-primary">Início Rápido</button>
+</form>
+
+<form asp-action="PausaCancelamento" method="post" class="mt-2">
+    <button type="submit" class="btn btn-danger" disabled="@(ViewBag.StatusAtual as StatusAquecimento?  != StatusAquecimento.Aquecendo)">
+        @(Model.IsPaused ? "Parar" : "Pausar")
+    </button>
+</form>
+
+<div id="display">@Model.Display</div>
+<div id="tempo">@ViewBag.TempoFormatado</div>
+<div id="status">@Model.Status</div>
+
+<script>
+    const tempoDiv = document.getElementById('tempo');
+
+    setInterval(() => {
+        fetch('/Microondas/GetTempoAtual')
+            .then(r => r.json())
+            .then(data => {
+                tempoDiv.textContent = data.tempoFormatado;
+            });
+    }, 1000);
+</script>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
