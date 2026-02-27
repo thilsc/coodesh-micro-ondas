@@ -4,8 +4,6 @@ namespace MicroondasDigital.Models.Enums
     {
         Parado,
         Aquecendo,
-        Pausado,
-        Concluido,
-        Cancelado
+        Pausado
     }
 }

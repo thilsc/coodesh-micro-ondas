@@ -1,6 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Http;
-using System.Text.Json;
 using MicroondasDigital.Models;
 using MicroondasDigital.Models.Enums;
 
@@ -8,98 +6,116 @@ namespace MicroondasDigital.Controllers;
 
 public class MicroondasController : Controller
 {
+    private AquecimentoModel _aquecimento;
+
+    public MicroondasController()
+    {
+        _aquecimento = new AquecimentoModel(this);      
+    }
+
     public IActionResult Index()
     {
-        var model = SessionHelper.GetStatusMicroondas(HttpContext);
-        
-        if (model.IsRunning && model.Tempo <= 0)
-        {
-            SessionHelper.ClearStatusMicroondas(HttpContext);
-            model.StatusEnum = StatusAquecimento.Parado;
-        }
-        
-        var aquecimento = new AquecimentoModel(model);
-        ViewBag.TempoFormatado = aquecimento.TempoFormatado;
-        ViewBag.StatusAtual = model.StatusEnum;
-
-        return View(model);
+        return View(_aquecimento.ResetarStatusMicroondasSeInvalido());
     }
 
-    [HttpGet]
-    public IActionResult GetTempoAtual()
-    {
-        var model = SessionHelper.GetStatusMicroondas(HttpContext);
-        using var aquecimento = new AquecimentoModel(model);
-        return Json(new { tempoFormatado = aquecimento.TempoFormatado });
-    }
-
+#region Funções básicas
     [HttpPost]
     public IActionResult Iniciar(MicroondasViewModel input)
     {
-        var model = SessionHelper.GetStatusMicroondas(HttpContext);
-        
-        using var aquecimento = new AquecimentoModel(model);
-        model.Tempo = input.Tempo;
-        model.Potencia = input.Potencia;
-        
-        try
+        if(!input.Validate())
         {
-            aquecimento.Iniciar();
-            SessionHelper.SetStatusMicroondas(HttpContext, model);
+            ModelState.AddModelError("", input.GetErrorLog());
+            return View("Index", input); 
         }
-        catch
+        else
         {
-            ModelState.AddModelError("", "Tempo (1-120s) ou potência (1-10) inválido");
-            return View("Index", model);
+            _aquecimento.IniciarAquecimento(TipoAquecimento.Padrao, 
+                                            input.TempoAquecimento, 
+                                            input.Potencia, 
+                                            TipoAquecimentoConstants.GetProgressChar(TipoAquecimento.Padrao));
+            return RedirectToAction("Index");
         }
-        
-        return RedirectToAction("Index");
     }
 
     [HttpPost]
     public IActionResult InicioRapido()
     {
-        var model = SessionHelper.GetStatusMicroondas(HttpContext);
-        model.TempoSegundos = 30;
-        model.Potencia = 10;
-        
-        var aquecimento = new AquecimentoModel(model);
-        aquecimento.Iniciar();
-        
-        SessionHelper.SetStatusMicroondas(HttpContext, model);
-        
+        _aquecimento.IniciarAquecimentoRapido();
         return RedirectToAction("Index");
-    }    
+    }
 
     [HttpPost]
     public IActionResult Pausar()
     {
-        var model = SessionHelper.GetStatusMicroondas(HttpContext);
-        var aquecimento = new AquecimentoModel(model);
-        aquecimento.Pausar();
-        
-        SessionHelper.SetStatusMicroondas(HttpContext, model);
-
+        _aquecimento.PausarAquecimento();
         return RedirectToAction("Index");
     }
 
     [HttpPost]
     public IActionResult Retomar()
     {
-        var model = SessionHelper.GetStatusMicroondas(HttpContext);
-        using var aquecimento = new AquecimentoModel(model);
-        aquecimento.Retomar();
-        SessionHelper.SetStatusMicroondas(HttpContext, model);
+        _aquecimento.RetomarAquecimento();               
         return RedirectToAction("Index");
     }
 
     [HttpPost]
-    public IActionResult Cancelar()
+    public IActionResult Parar()
     {
-        var model = SessionHelper.GetStatusMicroondas(HttpContext);
-        using var aquecimento = new AquecimentoModel(model);
-        aquecimento.Cancelar();
-        SessionHelper.ClearStatusMicroondas(HttpContext);
+        _aquecimento.PararAquecimento();
+        return RedirectToAction("Index");
+    }    
+#endregion
+
+#region Receitas
+    [HttpPost]
+    public IActionResult AquecerPipoca()
+    {
+        _aquecimento.IniciarModoAquecimentoPredefinido(TipoAquecimento.Pipoca);
         return RedirectToAction("Index");
     }
+    
+    [HttpPost]
+    public IActionResult AquecerLeite()
+    {
+        _aquecimento.IniciarModoAquecimentoPredefinido(TipoAquecimento.Leite);
+        return RedirectToAction("Index");
+    }
+
+    [HttpPost]
+    public IActionResult AquecerCarne()
+    {
+        _aquecimento.IniciarModoAquecimentoPredefinido(TipoAquecimento.Carne);
+        return RedirectToAction("Index");
+    }
+
+    [HttpPost]
+    public IActionResult AquecerFrango()
+    {
+        _aquecimento.IniciarModoAquecimentoPredefinido(TipoAquecimento.Frango);
+        return RedirectToAction("Index");
+    }
+
+    [HttpPost]
+    public IActionResult AquecerFeijao()
+    {
+        _aquecimento.IniciarModoAquecimentoPredefinido(TipoAquecimento.Feijao);
+        return RedirectToAction("Index");
+    }
+#endregion
+
+#region Atualização da Tela
+    [HttpGet]
+    public JsonResult StatusAtual()
+    {
+        return Json(_aquecimento.ObterJSONStatusMicroondas());
+    }
+
+    [HttpPost]
+    [IgnoreAntiforgeryToken] 
+    public IActionResult Tick()
+    {
+        return Json(_aquecimento.ExecutarProgressoAquecimento());
+    }
+#endregion
+
 }

@@ -1,53 +1,155 @@
-﻿@model MicroondasViewModel
+﻿@model MicroondasDigital.Models.MicroondasViewModel
 @using MicroondasDigital.Models.Enums
 
 @{
     ViewData["Title"] = "Micro-ondas Digital";
 }
+@Html.AntiForgeryToken() 
 
 <h1>Micro-ondas Digital</h1>
 
-<form asp-action="Iniciar" method="post" class="mt-2">
-    <div class="mb-3">
-        <label>Tempo</label>
-        <input asp-for="Tempo" type="number" min="1" max="120" class="form-control" disabled="@Model.IsRunning" />
-        <span asp-validation-for="Tempo" class="text-danger ms-2"></span>
+<div class="row">
+  <div class="col-12 col-sm-6">
+
+    <div class="card">
+        <div class="card-body">
+            <form id="startForm" asp-action="@(Model.IsPaused() ? "Retomar" : "Iniciar")" method="post" class="mt-2" style="display: grid;">
+                <div class="entradas" style="margin-bottom: 10px;">
+                    <label class="ms-3">Tempo</label>
+                    <input asp-for="TempoAquecimento" type="number" min="1" max="@(Constants.TempoAquecimentoMaxInputManual)" class="form-control d-inline w-25" disabled="@Model.IsRunning()" />
+                    <span asp-validation-for="TempoAquecimento" class="text-danger ms-2"></span>
+                    
+                    <label class="ms-3">Potência</label>
+                    <input asp-for="Potencia" type="number" min="1" max="@(Constants.PotenciaMax)" class="form-control d-inline w-25" disabled="@Model.IsRunning()" />
+                    <span asp-validation-for="Potencia" class="text-danger ms-2"></span>
+                </div>
+
+                <button id="startButton" type="submit" class="btn btn-primary" disabled="@(Model.IsRunning() && !Model.IsPaused())">
+                    @(Model.IsPaused() ? "Retomar" : "Iniciar")
+                </button>    
+            </form>
+
+            <form id="inicioRapidoForm" asp-action="InicioRapido" method="post" class="mt-2" style="display: grid;">
+                <button id="inicioRapidoButton" type="submit" class="btn btn-primary">Início Rápido</button>
+            </form>
+
+            <form id="pauseForm" asp-action="@(Model.IsPaused() ? "Parar" : "Pausar")" method="post" class="mt-2" style="display: grid;">
+                <button id="pauseButton" type="submit" class="btn btn-danger" disabled="@(!Model.IsRunning())">
+                    @(Model.IsPaused() ? "Parar" : "Pausar")
+                </button>
+            </form>
+
+        </div>            
     </div>
-    <div class="mb-3">
-        <label>Potência</label>
-        <input asp-for="Potencia" type="number" min="1" max="10" class="form-control" disabled="@Model.IsRunning" />
-        <span asp-validation-for="Potencia" class="text-danger ms-2"></span>
+  </div>
+
+  <div class="col-12 col-sm-6">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Receitas</h5>
+        <form asp-action="AquecerPipoca" method="post" class="mt-2" style="display: grid;"> <button type="submit" class="btn btn-primary" disabled="@(Model.IsRunning())">Pipoca</button></form>
+        <form asp-action="AquecerLeite" method="post" class="mt-2" style="display: grid;"> <button type="submit" class="btn btn-primary" disabled="@(Model.IsRunning())">Leite</button></form>
+        <form asp-action="AquecerCarne" method="post" class="mt-2" style="display: grid;"> <button type="submit" class="btn btn-primary" disabled="@(Model.IsRunning())">Carnes de boi</button></form>
+        <form asp-action="AquecerFrango" method="post" class="mt-2" style="display: grid;"> <button type="submit" class="btn btn-primary" disabled="@(Model.IsRunning())">Frango</button></form>
+        <form asp-action="AquecerFeijao" method="post" class="mt-2" style="display: grid;"> <button type="submit" class="btn btn-primary" disabled="@(Model.IsRunning())">Feijão</button></form>
+      </div>
     </div>
-    <button type="submit" class="btn btn-primary" disabled="@(ViewBag.StatusAtual as StatusAquecimento?  != StatusAquecimento.Parado)">
-        @(Model.IsPaused ? "Retomar" : "Iniciar")
-    </button>
-</form>
+  </div>
+</div>
 
-<form asp-action="InicioRapido" method="post" class="mt-2">
-    <button type="submit" class="btn btn-primary">Início Rápido</button>
-</form>
+<div class="row">
+  <div class="col-sm-12">
+    <div id="instrucoes"></div>    
+    <div id="statusContainer">
+        <div id="tempo">@ViewBag.TempoFormatado</div>
+        <div id="status">@Model.Status</div>
+    </div>
+    <div id="display">@Model.Display</div>
+    <div id="log"></div>
+  </div>
+</div>
 
-<form asp-action="PausaCancelamento" method="post" class="mt-2">
-    <button type="submit" class="btn btn-danger" disabled="@(ViewBag.StatusAtual as StatusAquecimento?  != StatusAquecimento.Aquecendo)">
-        @(Model.IsPaused ? "Parar" : "Pausar")
-    </button>
-</form>
+<style>
+    .blink {
+        animation: blink-animation 1s steps(1, start) infinite;
+    }
 
-<div id="display">@Model.Display</div>
-<div id="tempo">@ViewBag.TempoFormatado</div>
-<div id="status">@Model.Status</div>
+    /* double the @@ so Razor outputs a single @@ */  
+    @@keyframes blink-animation {
+        50% { opacity: 0; }
+    }
+</style>
 
 <script>
-    const tempoDiv = document.getElementById('tempo');
+    let intervalo;
 
-    setInterval(() => {
-        fetch('/Microondas/GetTempoAtual')
-            .then(r => r.json())
-            .then(data => {
-                tempoDiv.textContent = data.tempoFormatado;
-            });
-    }, 1000);
+    function iniciarPolling() {
+
+        if (intervalo) clearInterval(intervalo);
+        
+        intervalo = setInterval(() => {
+    
+            fetch('/Microondas/Tick', { 
+                    method: 'POST',
+                    headers: {  
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                    }
+                })
+                .then(() => {
+                    return fetch('/Microondas/StatusAtual');
+                })
+                .then(r => r.json())
+                .then(data => {
+
+                    document.getElementById('tempo').textContent = data.tempoFormatado;
+                    document.getElementById('status').textContent = data.status;
+                    document.getElementById('display').textContent = data.display;
+                    document.getElementById('instrucoes').textContent = data.ismodoAquecimentoPadrao ? '' : data.instrucoes;
+
+                    const startBtn = document.getElementById('startButton');
+                    const inicioRapidoBtn = document.getElementById('inicioRapidoButton');
+                    const pauseBtn = document.getElementById('pauseButton');
+                    const tempoDiv = document.getElementById('tempo');
+
+                    if(startBtn && pauseBtn && inicioRapidoBtn) {
+
+                        startBtn.disabled = data.isRunning && (!data.isPaused);
+                        pauseBtn.disabled = !data.isRunning;
+                        inicioRapidoBtn.disabled = data.isRunning && (!data.ismodoAquecimentoPadrao);
+
+                        if(data.isPaused) {
+                            startBtn.textContent = 'Retomar';
+                            startBtn.formAction = '/Microondas/Retomar';
+                            pauseBtn.textContent = 'Parar';
+                            pauseBtn.formAction = '/Microondas/Parar';
+                        } else {
+                            startBtn.textContent = 'Iniciar';
+                            startBtn.formAction = '/Microondas/Iniciar';
+                            pauseBtn.textContent = 'Pausar';
+                            pauseBtn.formAction = '/Microondas/Pausar';
+                        }
+                        
+                        document.querySelectorAll('form[action*="Aquecer"] button')
+                                .forEach(b => b.disabled = data.isRunning);
+
+                        if(data.isPaused) {
+                            tempoDiv?.classList.add('blink');
+                        } else {
+                            tempoDiv?.classList.remove('blink');
+                        }
+
+                        if (!data.isRunning && intervalo) {
+                            clearInterval(intervalo);
+                        }
+                    }
+                })
+                .catch(e => console.log('Polling error:', e));
+        }, 1000);
+    }
+
+    iniciarPolling();
 </script>
+
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

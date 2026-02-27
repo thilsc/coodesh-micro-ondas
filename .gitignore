@@ -6,3 +6,5 @@ Properties/
 *.sln.docstates
 **/*.userosscache
 **/*.sln.ide/
+
+.fake

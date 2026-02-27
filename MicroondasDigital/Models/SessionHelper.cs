@@ -9,9 +9,17 @@ public static class SessionHelper
     public static MicroondasViewModel GetStatusMicroondas(HttpContext context)
     {
         var json = context.Session.GetString(MICROWAVE_STATE_KEY);
-        return json != null 
-            ? JsonSerializer.Deserialize<MicroondasViewModel>(json) ?? new MicroondasViewModel()
-            : new MicroondasViewModel();
+
+        if(json != null)
+        {
+            Console.WriteLine($"Obtenção das informações da Sessão => {json}");
+
+            var model = JsonSerializer.Deserialize<MicroondasViewModel>(json);
+
+            return model ?? new MicroondasViewModel(); 
+        }
+
+        return new MicroondasViewModel();
     }
 
     public static void SetStatusMicroondas(HttpContext context, MicroondasViewModel state)

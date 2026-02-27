@@ -1,118 +1,172 @@
 using MicroondasDigital.Models.Enums;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 
 namespace MicroondasDigital.Models;
 
-public class AquecimentoModel : IDisposable
+public class AquecimentoModel
 {
-    private MicroondasViewModel _microondas;
-    private System.Timers.Timer? _timer;
-    private int _segundosRestantes;
-    private bool _disposed = false;
+    private readonly Controller _parentController;
+    private static string FormatTempo(int tempo) =>  $"{tempo / 60:D2}:{tempo % 60:D2}";
 
-    public bool IsRunning => _microondas.IsRunning;
-    public bool IsPaused => _microondas.IsPaused;
-    public int TempoRestante => _segundosRestantes;
-    public string TempoFormatado => FormatTempo(_segundosRestantes);
-    public string Status => _microondas.Status;
-    public string Display => _microondas.Display;
-
-    public StatusAquecimento StatusEnum => _microondas.StatusEnum;
-
-    public AquecimentoModel(MicroondasViewModel microondas)
+    public AquecimentoModel(Controller controller)
     {
-        _microondas = microondas;
-        _segundosRestantes = microondas.Tempo;
+        _parentController = controller;
     }
 
-    public void Iniciar()
-    {
-        if (!Validar()) throw new InvalidOperationException("Parâmetros inválidos");
-        
-        _microondas.IsRunning = true;
-        _microondas.IsPaused = false;
-        _segundosRestantes = _microondas.Tempo;
-        _microondas.StatusEnum = StatusAquecimento.Aquecendo;
-        _microondas.Display = "";
+#region Rotinas de Processamento e Gravação do Estado do Microondas
 
-        _timer = new System.Timers.Timer(1000);
-        _timer.Elapsed += OnTick;
-        _timer.Start();
+    private HttpContext GetContext()
+    {
+        return _parentController.HttpContext;
     }
 
-    public void Pausar()
+    private MicroondasViewModel GetStatusMicroondas()
     {
-        _microondas.IsPaused = true;
-        _microondas.StatusEnum = StatusAquecimento.Pausado;
-        _timer?.Stop();
+        return SessionHelper.GetStatusMicroondas(GetContext());
     }
 
-    public void Retomar()
+    private void SetStatusMicroondas(MicroondasViewModel state)
     {
-        _microondas.IsPaused = false;
-        _microondas.StatusEnum = StatusAquecimento.Aquecendo;
-        _timer?.Start();
+        SessionHelper.SetStatusMicroondas(GetContext(), state);
     }
 
-    public void Cancelar()
+    private void ClearStatusMicroondas()
     {
-        _timer?.Stop();
-        _timer?.Dispose();
-        _microondas.IsRunning = false;
-        _microondas.IsPaused = false;
-        _microondas.StatusEnum = StatusAquecimento.Cancelado;
-        _microondas.Display = "";
-        _segundosRestantes = 0;
+        SessionHelper.ClearStatusMicroondas(GetContext());
     }
 
-    public void Acrescentar30s()
+    private void AlterarStatusAquecimento(StatusAquecimento status)
     {
-        if (_microondas.IsRunning && !_microondas.IsPaused)
+        MicroondasViewModel model = GetStatusMicroondas();
+
+        model.StatusEnum = status;
+
+        SetStatusMicroondas(model);
+    }
+
+    private object GetViewObjectStatusMicroondas(MicroondasViewModel model)
+    {
+        return new 
         {
-            _microondas.Tempo += 30;
-            _segundosRestantes += 30;
-            //_microondas.StatusEnum = StatusAquecimento.Aquecendo //_microondas.Status = "+30s adicionados";
-        }
+            tempoFormatado = FormatTempo(model.TempoAquecimento),
+            display        = model.Display,
+            status         = model.Status,
+            isRunning      = model.IsRunning(),
+            isPaused       = model.IsPaused(),
+            instrucoes     = model.Instrucoes,
+            ismodoAquecimentoPadrao = model.ModoAquecimento == TipoAquecimento.Padrao
+        };
     }
 
-    private string FormatTempo(int totalSeconds)
+    public MicroondasViewModel ResetarStatusMicroondasSeInvalido()
     {
-        var minutes = totalSeconds / 60;
-        var seconds = totalSeconds % 60;
-        return $"{minutes:D2}:{seconds:D2}";
-    }
+        MicroondasViewModel model = GetStatusMicroondas();
 
-    private bool Validar()
-    {
-        return _microondas.Tempo >= 1 && _microondas.Tempo <= 120 &&
-               _microondas.Potencia >= 1 && _microondas.Potencia <= 10;
-    }
-
-    private void OnTick(object? sender, System.Timers.ElapsedEventArgs e)
-    {
-        if (_disposed) return;
-        
-        _segundosRestantes--;
-        _microondas.Display += new string('.', _microondas.Potencia);
-        
-        if (_segundosRestantes <= 0)
+        if( (model.TempoAquecimento <= 0) &&
+            (model.StatusEnum == StatusAquecimento.Parado) )
         {
-            Finalizar();
+            ClearStatusMicroondas();            
         }
+
+        return model;
     }
 
-    private void Finalizar()
+    public void IniciarAquecimento(TipoAquecimento modoAquecimento, int tempoAquecimento, int potencia, char caractereProgresso)
     {
-        _timer?.Stop();
-        _microondas.StatusEnum = StatusAquecimento.Concluido;
-        _microondas.Display += " Aquecimento concluído!";
-        _microondas.IsRunning = false;
+        MicroondasViewModel model =  new MicroondasViewModel
+        {
+            ModoAquecimento = modoAquecimento,
+            TempoAquecimento = tempoAquecimento,
+            Potencia = potencia,
+            CaractereProgresso = caractereProgresso,
+            Display = string.Empty,
+            StatusEnum = StatusAquecimento.Aquecendo
+        };
+        
+        SetStatusMicroondas(model);
     }
 
-    public void Dispose()
+    public void IniciarModoAquecimentoPredefinido(TipoAquecimento ModoAquecimento)
     {
-        _disposed = true;
-        _timer?.Stop();
-        _timer?.Dispose();
-        GC.SuppressFinalize(this); 
+        IniciarAquecimento(ModoAquecimento, 
+                           TipoAquecimentoConstants.GetTempoAquecimento(ModoAquecimento),
+                           TipoAquecimentoConstants.GetPotencia(ModoAquecimento), 
+                           TipoAquecimentoConstants.GetProgressChar(ModoAquecimento));
     }
+
+    public void IniciarAquecimentoRapido()
+    {
+        MicroondasViewModel model = GetStatusMicroondas();
+
+        switch(model.StatusEnum) 
+        {
+            case StatusAquecimento.Parado:
+                model.TempoAquecimento = Constants.TempoAquecimentoInicioRapido;
+                model.Potencia = Constants.PotenciaPadrao;
+                model.Display = "";
+                break;
+
+            case StatusAquecimento.Aquecendo:
+            case StatusAquecimento.Pausado:
+                model.TempoAquecimento += Constants.TempoAquecimentoInicioRapido;
+                break;
+
+            default:
+                break;
+        }
+
+        model.StatusEnum = StatusAquecimento.Aquecendo;
+
+        SetStatusMicroondas(model);
+    }    
+
+    public void PausarAquecimento()
+    {
+        AlterarStatusAquecimento(StatusAquecimento.Pausado);
+    }
+
+    public void RetomarAquecimento()
+    {
+        AlterarStatusAquecimento(StatusAquecimento.Aquecendo);
+    }    
+
+    public void PararAquecimento()
+    {
+        ClearStatusMicroondas();
+    }
+
+    public object? ObterJSONStatusMicroondas()
+    {
+        MicroondasViewModel model = GetStatusMicroondas();
+
+        return GetViewObjectStatusMicroondas(model); 
+    }
+
+    public object? ExecutarProgressoAquecimento()
+    {
+        MicroondasViewModel model = GetStatusMicroondas();
+        
+        if ( model.IsRunning() && 
+             (!model.IsPaused()) && 
+             (model.TempoAquecimento > 0) )
+        {
+            model.TempoAquecimento--;
+            model.Display += model.GetProgressStep() + ' ';
+            
+            //Console.WriteLine($"Tick OK: novo tempo={model.TempoAquecimento}");
+            
+            if (model.TempoAquecimento <= 0)
+            {
+                model.StatusEnum = StatusAquecimento.Parado;
+                model.Display += " Aquecimento concluído!";
+            }
+        }
+        
+        SetStatusMicroondas(model);
+
+        return GetViewObjectStatusMicroondas(model);
+    }    
+#endregion
+
 }
