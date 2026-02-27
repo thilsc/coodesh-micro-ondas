@@ -46,7 +46,10 @@
   <div class="col-12 col-sm-6">
     <div class="card">
       <div class="card-body">
-        <h5 class="card-title">Receitas</h5>
+        <h5 class="card-title" style="display: flex;">
+            <span class="col-8">Programas</span>
+            <button id="openPrograms" class="btn btn-warning col-4" disabled="@(Model.IsRunning())">Novo...</button>
+        </h5>
         <form asp-action="AquecerPipoca" method="post" class="mt-2" style="display: grid;"> <button type="submit" class="btn btn-primary" disabled="@(Model.IsRunning())">Pipoca</button></form>
         <form asp-action="AquecerLeite" method="post" class="mt-2" style="display: grid;"> <button type="submit" class="btn btn-primary" disabled="@(Model.IsRunning())">Leite</button></form>
         <form asp-action="AquecerCarne" method="post" class="mt-2" style="display: grid;"> <button type="submit" class="btn btn-primary" disabled="@(Model.IsRunning())">Carnes de boi</button></form>
@@ -79,6 +82,10 @@
         50% { opacity: 0; }
     }
 </style>
+
+<!-- Modais para gerenciamento de programas customizados -- >
+<div id="programModalContainer"></div>
+-->
 
 <script>
     let intervalo;
@@ -148,6 +155,116 @@
     }
 
     iniciarPolling();
+
+    /** Gerenciamento de programas customizados *-/
+    document.getElementById('openPrograms').addEventListener('click', loadProgramList);
+
+    function loadProgramList() {
+        fetch('/Microondas/ListaProgramas', { credentials: 'same-origin' })
+            .then(r => r.text())
+            .then(html => {
+                document.getElementById('programModalContainer').innerHTML = html;
+                var modal = new bootstrap.Modal(document.getElementById('programListModal'));
+                modal.show();
+                attachListHandlers();
+            });
+    }
+
+    function attachListHandlers() {
+        const newBtn = document.getElementById('btnNewProgram');
+        if (newBtn) newBtn.addEventListener('click', () => loadProgramModal());
+        document.querySelectorAll('.useProgram').forEach(btn => {
+            btn.addEventListener('click', () => {
+                fetch('/Microondas/UsarPrograma', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `id=${btn.dataset.id}`
+                }).then(() => {
+                    // after starting program, go back to index so status updates
+                    window.location.reload();
+                });
+            });
+        });
+        document.querySelectorAll('.editProgram').forEach(btn => {
+            btn.addEventListener('click', () => loadProgramModal(btn.dataset.id));
+        });
+        document.querySelectorAll('.deleteProgram').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (confirm('Deseja realmente excluir este programa?')) {
+                    fetch('/Microondas/DeletePrograma', {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: `id=${btn.dataset.id}`
+                    }).then(() => loadProgramList());
+                }
+            });
+        });
+    }
+
+    function loadProgramModal(id) {
+        const url = id ? `/Microondas/EditPrograma?id=${id}` : '/Microondas/CriarProgramaCustomizado';
+        fetch(url)
+            .then(r => r.text())
+            .then(html => {
+                document.getElementById('programModalContainer').innerHTML = html;
+                var modalEl = document.getElementById('programModal');
+                var modal = new bootstrap.Modal(modalEl);
+                modal.show();
+
+                const form = modalEl.querySelector('form');
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    const data = new FormData(form);
+                    const action = form.getAttribute('action');
+                    fetch(action, { method: 'POST', body: data })
+                        .then(r => r.json())
+                        .then(result => {
+                            if (result.success) {
+                                modal.hide();
+                                loadProgramList();
+                            } else if (result.html) {
+                                // replace modal html with returned html containing errors
+                                document.getElementById('programModalContainer').innerHTML = result.html;
+                                // reshow and reattach
+                                var newModalEl = document.getElementById('programModal');
+                                var newModal = new bootstrap.Modal(newModalEl);
+                                newModal.show();
+                                loadProgramModalHandlers(newModalEl);
+                            }
+                        });
+                });
+            });
+    }
+
+    function loadProgramModalHandlers(modalEl) {
+        const form = modalEl.querySelector('form');
+        if (!form) return;
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const data = new FormData(form);
+            const action = form.getAttribute('action');
+            fetch(action, { method: 'POST', body: data })
+                .then(r => r.json())
+                .then(result => {
+                    if (result.success) {
+                        var newModal = bootstrap.Modal.getInstance(modalEl);
+                        newModal.hide();
+                        loadProgramList();
+                    } else if (result.html) {
+                        document.getElementById('programModalContainer').innerHTML = result.html;
+                        var newModalEl = document.getElementById('programModal');
+                        var newModal = new bootstrap.Modal(newModalEl);
+                        newModal.show();
+                        loadProgramModalHandlers(newModalEl);
+                    }
+                });
+        });
+    }
+    
+    **/
+}
 </script>
 
 

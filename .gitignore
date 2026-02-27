@@ -8,3 +8,4 @@ Properties/
 **/*.sln.ide/
 
 .fake
+.vscode/

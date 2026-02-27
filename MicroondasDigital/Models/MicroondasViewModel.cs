@@ -2,10 +2,8 @@ using MicroondasDigital.Models.Enums;
 
 namespace MicroondasDigital.Models;
 
-public class MicroondasViewModel
+public class MicroondasViewModel : BaseViewModel
 {
-    private List<string> _log = [];
-    //private bool _loadingFromJSON = false;
     public int TempoAquecimento { get; set; }
     public int Potencia { get; set; } = Constants.PotenciaPadrao;
     public char CaractereProgresso { get; set; } = TipoAquecimentoConstants.GetProgressChar(TipoAquecimento.Padrao);
@@ -16,36 +14,26 @@ public class MicroondasViewModel
     public string Instrucoes => TipoAquecimentoConstants.GetInstrucoes(ModoAquecimento);    
     public string Display { get; set; } = string.Empty;
 
-    public MicroondasViewModel()
+    private IEnumerable<ValidationResult> GetValidations()
     {
-        //implementação do create
-    }
-
-    public string GetErrorLog()
-    {
-        return string.Join(Environment.NewLine, _log);
-    }
-
-    public bool Validate()
-    {
-        _log.Clear();
-
-        if(TempoAquecimento < 1) 
-        {
-            _log.Add("O tempo informado não pode ser menor que 1");
-        }
-
-        if(TempoAquecimento > Constants.TempoAquecimentoMaxInputManual)
-        {
-            _log.Add("O tempo informado não pode passar de 2 minutos.");
-        }
-
-        if( (Potencia < 1) || (Potencia > Constants.PotenciaPadrao) )
-        {
-            _log.Add("A Potência deve ficar entre 1 e 10.");
-        }
-
-        return _log.Count == 0;
+        return
+        [
+            new ValidationResult
+            {
+                IsValid = TempoAquecimento >= 1,
+                Message = "O tempo informado não pode ser menor que 1"
+            },
+            new ValidationResult
+            {
+                IsValid = (ModoAquecimento == TipoAquecimento.Padrao) && (TempoAquecimento <= Constants.TempoAquecimentoMaxInputManual),
+                Message = "O tempo informado não pode passar de 2 minutos."
+            },
+            new ValidationResult
+            {
+                IsValid = (Potencia >= 1) && (Potencia <= Constants.PotenciaMax),
+                Message = "A Potência deve ficar entre 1 e 10."
+            }
+        ];
     }
 
     public bool IsRunning()
