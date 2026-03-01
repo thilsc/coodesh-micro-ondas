@@ -46,6 +46,11 @@ h5.card-title {
   margin: 15px 15px 5px 15px;
 }
 
+h5.card-title #openCustomPrograms { 
+  font-weight: bold; 
+  font-size: small;
+}
+
 #DefaultPrograms {
   display: flex;
 }

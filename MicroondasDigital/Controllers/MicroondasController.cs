@@ -108,10 +108,10 @@ public class MicroondasController : Controller
 
 #region Programas Customizados
     [HttpPost]
-    public IActionResult ExecuteCustomProgram(int programId)
+    public IActionResult ExecuteCustomProgram(string programId)
     {
         var programas = CustomProgramRepository.GetAll();
-        var programa = programas.FirstOrDefault(p => p.Id == programId.ToString());
+        var programa = programas.FirstOrDefault(p => p.Id == programId);
         if (programa != null)
         {
             _aquecimento.IniciarAquecimento(

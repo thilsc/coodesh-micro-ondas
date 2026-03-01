@@ -46,8 +46,8 @@
   <div class="col-12 col-sm-6">
     <div class="card">
       <h5 class="card-title">
-        <span class="col-10">Programas</span>
-        <button id="openCustomPrograms" class="btn btn-warning col-2" disabled="@(Model.IsRunning())">Novo...</button>
+        <span class="col-9">Programas</span>
+        <button id="openCustomPrograms" class="btn btn-warning col-3">Personalizar...</button>
       </h5>
 
       <div class="card-body">
@@ -173,13 +173,21 @@
     document.getElementById('openCustomPrograms').addEventListener('click', loadProgramList);
 
     function loadProgramList() {
-
         fetch('/Microondas/ListaProgramas')
             .then(r => r.text())
             .then(html => {
                 document.getElementById('programModalContainer').innerHTML = html;
-                var modal = new bootstrap.Modal(document.getElementById('programListModal'));
-                modal.show();
+                var listModalEl = document.getElementById('programListModal');
+                var listModal = new bootstrap.Modal(listModalEl);
+
+                // when the list modal is hidden, blur any focused element to avoid aria-hidden warnings
+                listModalEl.addEventListener('hidden.bs.modal', () => {
+                    if (document.activeElement instanceof HTMLElement) {
+                        document.activeElement.blur();
+                    }
+                });
+
+                listModal.show();
 
                 /* Handlers dos programas */ 
                 const newBtn = document.getElementById('btnNewProgram');
@@ -206,6 +214,13 @@
     }
 
     function loadProgramModal(id) {
+        // hide the list modal first if it's open to prevent nested focus issues
+        var listModalEl = document.getElementById('programListModal');
+        if (listModalEl) {
+            var existing = bootstrap.Modal.getInstance(listModalEl);
+            if (existing) existing.hide();
+        }
+
         const url = id ? `/Microondas/EditarPrograma?id=${id}` : '/Microondas/CriarProgramaCustomizado';
 
         fetch(url)
@@ -214,6 +229,10 @@
                 document.getElementById('programModalContainer').innerHTML = html;
                 var modalEl = document.getElementById('programModal');
                 var modal = new bootstrap.Modal(modalEl);
+                // blur focused element when this modal hides to avoid aria-hidden warnings
+                modalEl.addEventListener('hidden.bs.modal', () => {
+                    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+                });
                 modal.show();
 
                 const form = modalEl.querySelector('form');
@@ -271,11 +290,6 @@
         });
     }
 
-    $('input[required], select[required],textarea[required]').each(
-        function(){
-            $($(this).parent()).find('label').addClass('required')
-        }
-    );
 </script>
 
 
