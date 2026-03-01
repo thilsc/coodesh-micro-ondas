@@ -1,35 +1,37 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
 namespace MicroondasDigital.Models
 {
     public class ValidationResult
     {
         public bool IsValid { get; set; }
+        public string Field { get; set; } = string.Empty;
         public string Message { get; set; } = string.Empty;
     }
 
-    public class BaseViewModel
+    public abstract class BaseViewModel
     {
-        private List<string> _log = [];
-        public string GetErrorLog()
+        private Dictionary<string, string> _log = new Dictionary<string, string>();
+        public Dictionary<string, string> GetErrorLog()
         {
-            return string.Join(Environment.NewLine, _log);
+            return _log;
         }
 
         public bool Validate()
         {
             _log.Clear();
 
-            foreach (var validation in GetValidations())
+            foreach (var validation in GetValidations() ?? Enumerable.Empty<ValidationResult>())
             {
                 if (!validation.IsValid)
-                    _log.Add(validation.Message);
+                    _log.Add(validation.Field, validation.Message);
             }
 
             return _log.Count == 0;
         }
 
-        private IEnumerable<ValidationResult> GetValidations()
-        {
-            throw new NotImplementedException();
-        }
+        protected abstract IEnumerable<ValidationResult> GetValidations();
     }
 }

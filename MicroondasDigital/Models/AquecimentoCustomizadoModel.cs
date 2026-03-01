@@ -9,14 +9,13 @@ public class AquecimentoCustomizadoModel : BaseViewModel
     public string Alimento { get; set; } = string.Empty;
     public int Tempo { get; set; } = 1;
     public int Potencia { get; set; } = Constants.PotenciaPadrao;
-    public char CaractereProgresso { get; set; } = TipoAquecimentoConstants.GetProgressChar(TipoAquecimento.Padrao);
+    public char CaractereProgresso { get; set; } = '\0';
     public string Instrucoes { get; set; } = string.Empty;
 
-    private IEnumerable<ValidationResult> GetValidations()
+    protected override IEnumerable<ValidationResult> GetValidations()
     {
         return
-            new List<ValidationResult>
-            {
+            [
                 new ValidationResult
                 {
                     IsValid = !string.IsNullOrWhiteSpace(Nome),
@@ -42,6 +41,6 @@ public class AquecimentoCustomizadoModel : BaseViewModel
                     IsValid = CaractereProgresso != '\0' && !char.IsWhiteSpace(CaractereProgresso),
                     Message = "O caractere de progresso é obrigatório."
                 }
-            };
+            ];
     }    
 }

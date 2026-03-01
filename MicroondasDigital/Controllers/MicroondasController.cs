@@ -24,15 +24,15 @@ public class MicroondasController : Controller
     {
         if(!input.Validate())
         {
-            ModelState.AddModelError("", input.GetErrorLog());
+            foreach (var error in input.GetErrorLog())
+            {
+                ModelState.AddModelError(error.Key, error.Value);
+            }            
             return View("Index", input); 
         }
         else
         {
-            _aquecimento.IniciarAquecimento(TipoAquecimento.Padrao, 
-                                            input.TempoAquecimento, 
-                                            input.Potencia, 
-                                            TipoAquecimentoConstants.GetProgressChar(TipoAquecimento.Padrao));
+            _aquecimento.IniciarAquecimento(input);
             return RedirectToAction("Index");
         }
     }
@@ -103,7 +103,55 @@ public class MicroondasController : Controller
     }
 #endregion
 
-#region Programas customizados
+#region Programas Customizados
+    [HttpPost]
+    public IActionResult ExecuteCustomProgram(int programId)
+    {
+        var programas = new List<AquecimentoCustomizadoModel>
+        {
+            new() {
+                Id = "1",
+                Nome = "Batata e beterraba",
+                Alimento = "Batata e beterraba",
+                Tempo = 180,
+                Potencia = 8,
+                CaractereProgresso = '*',
+                Instrucoes = "Corte a batata e a beterraba em pedaços médios para garantir um aquecimento uniforme."
+            },
+            new() {
+                Id = "2",
+                Nome = "Vegetais congelados",
+                Alimento = "Vegetais congelados",
+                Tempo = 240,
+                Potencia = 7,
+                CaractereProgresso = 'w',
+                Instrucoes = "Corte os vegetais congelados em pedaços médios para garantir um aquecimento uniforme."
+            },
+            new() {
+                Id = "3",
+                Nome = "Peixe",
+                Alimento = "Peixe",
+                Tempo = 300,
+                Potencia = 6,
+                CaractereProgresso = '?',
+                Instrucoes = "Corte o peixe em pedaços médios para garantir um aquecimento uniforme."
+            }
+        };
+
+        if (programas.FirstOrDefault(p => p.Id == programId.ToString()) is AquecimentoCustomizadoModel programa)
+        {
+            _aquecimento.IniciarAquecimento(
+                TipoAquecimento.Customizado,
+                programa.Tempo,
+                programa.Potencia,
+                programa.Instrucoes,
+                programa.CaractereProgresso
+            );
+        }
+
+        return RedirectToAction("Index");
+    }
+
     /*
     [HttpGet]
     public IActionResult ListaProgramas()

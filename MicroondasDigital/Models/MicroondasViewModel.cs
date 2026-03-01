@@ -11,26 +11,29 @@ public class MicroondasViewModel : BaseViewModel
     public string Status => StatusConstants.GetDescricao(StatusEnum);    
     public TipoAquecimento ModoAquecimento { get; set; } = TipoAquecimento.Padrao;
     public string Modo => TipoAquecimentoConstants.GetDescricao(ModoAquecimento);
-    public string Instrucoes => TipoAquecimentoConstants.GetInstrucoes(ModoAquecimento);    
+    public string Instrucoes {get; set; } = string.Empty;
     public string Display { get; set; } = string.Empty;
 
-    private IEnumerable<ValidationResult> GetValidations()
+protected override IEnumerable<ValidationResult> GetValidations()
     {
         return
         [
             new ValidationResult
             {
                 IsValid = TempoAquecimento >= 1,
-                Message = "O tempo informado não pode ser menor que 1"
+                Field = nameof(TempoAquecimento),
+                Message = "O Tempo não pode ser menor que 1."
             },
             new ValidationResult
             {
                 IsValid = (ModoAquecimento == TipoAquecimento.Padrao) && (TempoAquecimento <= Constants.TempoAquecimentoMaxInputManual),
-                Message = "O tempo informado não pode passar de 2 minutos."
+                Field = nameof(TempoAquecimento),
+                Message = "O Tempo não pode passar de 2min (120 seg)."
             },
             new ValidationResult
             {
                 IsValid = (Potencia >= 1) && (Potencia <= Constants.PotenciaMax),
+                Field = nameof(Potencia),
                 Message = "A Potência deve ficar entre 1 e 10."
             }
         ];

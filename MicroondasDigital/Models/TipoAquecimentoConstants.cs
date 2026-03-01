@@ -58,11 +58,19 @@ namespace MicroondasDigital.Models
         private const char caractereProgresso_Carne  = '$';
         private const char caractereProgresso_Frango = '@';
         private const char caractereProgresso_Feijao = 'º';
+        public static readonly List<char> CaracteresProgressoReservados =
+        [
+            caractereProgresso_Padrao,
+            caractereProgresso_Pipoca,
+            caractereProgresso_Leite,
+            caractereProgresso_Carne,
+            caractereProgresso_Frango,
+            caractereProgresso_Feijao
+        ];
         #endregion
 
         public static string GetDescricao(TipoAquecimento status) => status switch
             {
-                TipoAquecimento.Padrao => desc_Padrao,
                 TipoAquecimento.Pipoca => desc_Pipoca,
                 TipoAquecimento.Leite  => desc_Leite,
                 TipoAquecimento.Carne  => desc_Carne,        
@@ -73,7 +81,6 @@ namespace MicroondasDigital.Models
 
         public static string GetInstrucoes(TipoAquecimento status) => status switch
             {
-                TipoAquecimento.Padrao => "",
                 TipoAquecimento.Pipoca => instr_Pipoca,
                 TipoAquecimento.Leite  => instr_Leite,
                 TipoAquecimento.Carne  => instr_CarneFrango,        
@@ -84,7 +91,6 @@ namespace MicroondasDigital.Models
  
         public static int GetTempoAquecimento(TipoAquecimento status) => status switch
             {
-                TipoAquecimento.Padrao => 0,
                 TipoAquecimento.Pipoca => tempo_Pipoca,
                 TipoAquecimento.Leite  => tempo_Leite,
                 TipoAquecimento.Carne  => tempo_Carne,        
@@ -106,7 +112,6 @@ namespace MicroondasDigital.Models
 
         public static char GetProgressChar(TipoAquecimento status) => status switch
             {
-                TipoAquecimento.Padrao => caractereProgresso_Padrao,
                 TipoAquecimento.Pipoca => caractereProgresso_Pipoca,
                 TipoAquecimento.Leite  => caractereProgresso_Leite,
                 TipoAquecimento.Carne  => caractereProgresso_Carne,

@@ -72,13 +72,14 @@ public class AquecimentoModel
         return model;
     }
 
-    public void IniciarAquecimento(TipoAquecimento modoAquecimento, int tempoAquecimento, int potencia, char caractereProgresso)
+    public void IniciarAquecimento(TipoAquecimento modoAquecimento, int tempoAquecimento, int potencia, string instrucoes, char caractereProgresso)
     {
         MicroondasViewModel model =  new MicroondasViewModel
         {
             ModoAquecimento = modoAquecimento,
             TempoAquecimento = tempoAquecimento,
             Potencia = potencia,
+            Instrucoes = instrucoes,
             CaractereProgresso = caractereProgresso,
             Display = string.Empty,
             StatusEnum = StatusAquecimento.Aquecendo
@@ -87,11 +88,21 @@ public class AquecimentoModel
         SetStatusMicroondas(model);
     }
 
+    public void IniciarAquecimento(MicroondasViewModel input)
+    {
+        IniciarAquecimento(input.ModoAquecimento, 
+                           input.TempoAquecimento, 
+                           input.Potencia, 
+                           input.Instrucoes,
+                           input.CaractereProgresso);
+    }
+
     public void IniciarModoAquecimentoPredefinido(TipoAquecimento ModoAquecimento)
     {
         IniciarAquecimento(ModoAquecimento, 
                            TipoAquecimentoConstants.GetTempoAquecimento(ModoAquecimento),
                            TipoAquecimentoConstants.GetPotencia(ModoAquecimento), 
+                           TipoAquecimentoConstants.GetInstrucoes(ModoAquecimento),
                            TipoAquecimentoConstants.GetProgressChar(ModoAquecimento));
     }
 
@@ -159,6 +170,7 @@ public class AquecimentoModel
             if (model.TempoAquecimento <= 0)
             {
                 model.StatusEnum = StatusAquecimento.Parado;
+                model.ModoAquecimento = TipoAquecimento.Padrao;
                 model.Display += " Aquecimento concluído!";
             }
         }

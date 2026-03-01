@@ -7,6 +7,7 @@ namespace MicroondasDigital.Models.Enums
         Leite,
         Carne,
         Frango,
-        Feijao
+        Feijao,
+        Customizado
     }
 }

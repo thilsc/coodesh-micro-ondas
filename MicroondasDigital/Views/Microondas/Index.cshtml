@@ -12,28 +12,28 @@
   <div class="col-12 col-sm-6">
 
     <div class="card">
-        <div class="card-body">
+        <div class="card-body" style="display: flex;">
             <form id="startForm" asp-action="@(Model.IsPaused() ? "Retomar" : "Iniciar")" method="post" class="mt-2" style="display: grid;">
                 <div class="entradas" style="margin-bottom: 10px;">
-                    <label class="ms-3">Tempo</label>
-                    <input asp-for="TempoAquecimento" type="number" min="1" max="@(Constants.TempoAquecimentoMaxInputManual)" class="form-control d-inline w-25" disabled="@Model.IsRunning()" />
+                    <label asp-for="TempoAquecimento" class="ms-3">Tempo</label>
+                    <input asp-for="TempoAquecimento" type="number" class="form-control d-inline w-25" disabled="@Model.IsRunning()" />
                     <span asp-validation-for="TempoAquecimento" class="text-danger ms-2"></span>
-                    
-                    <label class="ms-3">Potência</label>
-                    <input asp-for="Potencia" type="number" min="1" max="@(Constants.PotenciaMax)" class="form-control d-inline w-25" disabled="@Model.IsRunning()" />
+
+                    <label asp-for="Potencia" class="ms-3">Potência</label>
+                    <input asp-for="Potencia" type="number" class="form-control d-inline w-25" disabled="@Model.IsRunning()" />
                     <span asp-validation-for="Potencia" class="text-danger ms-2"></span>
                 </div>
 
-                <button id="startButton" type="submit" class="btn btn-primary" disabled="@(Model.IsRunning() && !Model.IsPaused())">
+                <button id="startButton" type="submit" class="btn btn-success" disabled="@(Model.IsRunning() && !Model.IsPaused())">
                     @(Model.IsPaused() ? "Retomar" : "Iniciar")
                 </button>    
             </form>
 
-            <form id="inicioRapidoForm" asp-action="InicioRapido" method="post" class="mt-2" style="display: grid;">
+            <form id="inicioRapidoForm" asp-action="InicioRapido" method="post" class="mt-2" style="display: grid; margin: 5px;">
                 <button id="inicioRapidoButton" type="submit" class="btn btn-primary">Início Rápido</button>
             </form>
 
-            <form id="pauseForm" asp-action="@(Model.IsPaused() ? "Parar" : "Pausar")" method="post" class="mt-2" style="display: grid;">
+            <form id="pauseForm" asp-action="@(Model.IsPaused() ? "Parar" : "Pausar")" method="post" class="mt-2" style="display: grid; margin: 5px;">
                 <button id="pauseButton" type="submit" class="btn btn-danger" disabled="@(!Model.IsRunning())">
                     @(Model.IsPaused() ? "Parar" : "Pausar")
                 </button>
@@ -45,16 +45,29 @@
 
   <div class="col-12 col-sm-6">
     <div class="card">
+      <h5 class="card-title">
+        <span class="col-10">Programas</span>
+        <button id="openPrograms" class="btn btn-warning col-2" disabled="@(Model.IsRunning())">Novo...</button>
+      </h5>
+
       <div class="card-body">
-        <h5 class="card-title" style="display: flex;">
-            <span class="col-8">Programas</span>
-            <button id="openPrograms" class="btn btn-warning col-4" disabled="@(Model.IsRunning())">Novo...</button>
-        </h5>
-        <form asp-action="AquecerPipoca" method="post" class="mt-2" style="display: grid;"> <button type="submit" class="btn btn-primary" disabled="@(Model.IsRunning())">Pipoca</button></form>
-        <form asp-action="AquecerLeite" method="post" class="mt-2" style="display: grid;"> <button type="submit" class="btn btn-primary" disabled="@(Model.IsRunning())">Leite</button></form>
-        <form asp-action="AquecerCarne" method="post" class="mt-2" style="display: grid;"> <button type="submit" class="btn btn-primary" disabled="@(Model.IsRunning())">Carnes de boi</button></form>
-        <form asp-action="AquecerFrango" method="post" class="mt-2" style="display: grid;"> <button type="submit" class="btn btn-primary" disabled="@(Model.IsRunning())">Frango</button></form>
-        <form asp-action="AquecerFeijao" method="post" class="mt-2" style="display: grid;"> <button type="submit" class="btn btn-primary" disabled="@(Model.IsRunning())">Feijão</button></form>
+
+        <div id="DefaultPrograms">
+            <form asp-action="AquecerPipoca" method="post"> <button type="submit" class="btn btn-primary" disabled="@(Model.IsRunning())">Pipoca</button></form>
+            <form asp-action="AquecerLeite"  method="post"> <button type="submit" class="btn btn-primary" disabled="@(Model.IsRunning())">Leite</button></form>
+            <form asp-action="AquecerCarne"  method="post"> <button type="submit" class="btn btn-primary" disabled="@(Model.IsRunning())">Carnes de boi</button></form>
+            <form asp-action="AquecerFrango" method="post"> <button type="submit" class="btn btn-primary" disabled="@(Model.IsRunning())">Frango</button></form>
+            <form asp-action="AquecerFeijao" method="post"> <button type="submit" class="btn btn-primary" disabled="@(Model.IsRunning())">Feijão</button></form>
+        </div>
+
+        <div id="CustomPrograms">
+            <form asp-action="ExecuteCustomProgram" method="post">
+                <button type="submit" name="programId" value="1" class="btn btn-secondary" disabled="@(Model.IsRunning())">Batata e beterraba</button>
+                <button type="submit" name="programId" value="2" class="btn btn-secondary" disabled="@(Model.IsRunning())">Vegetais congelados</button>
+                <button type="submit" name="programId" value="3" class="btn btn-secondary" disabled="@(Model.IsRunning())">Peixe</button>
+            </form>
+        </div>
+
       </div>
     </div>
   </div>
@@ -62,7 +75,7 @@
 
 <div class="row">
   <div class="col-sm-12">
-    <div id="instrucoes"></div>    
+    <div id="instrucoes">@ViewBag.instrucoes</div>
     <div id="statusContainer">
         <div id="tempo">@ViewBag.TempoFormatado</div>
         <div id="status">@Model.Status</div>
@@ -111,7 +124,7 @@
                     document.getElementById('tempo').textContent = data.tempoFormatado;
                     document.getElementById('status').textContent = data.status;
                     document.getElementById('display').textContent = data.display;
-                    document.getElementById('instrucoes').textContent = data.ismodoAquecimentoPadrao ? '' : data.instrucoes;
+                    document.getElementById('instrucoes').textContent = data.instrucoes.trim();
 
                     const startBtn = document.getElementById('startButton');
                     const inicioRapidoBtn = document.getElementById('inicioRapidoButton');
@@ -262,9 +275,7 @@
                 });
         });
     }
-    
     **/
-}
 </script>
 
 

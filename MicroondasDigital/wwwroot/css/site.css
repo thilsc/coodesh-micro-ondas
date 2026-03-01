@@ -21,6 +21,14 @@ body {
   margin-bottom: 60px;
 }
 
+form#startForm span.text-danger {
+    display: block;
+    font-weight: bold;
+    background: brown;
+    color: white !important;
+    text-align: center;
+}
+
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
   color: var(--bs-secondary-color);
   text-align: end;
@@ -28,6 +36,37 @@ body {
 
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
+}
+
+h5.card-title {
+  display: flex;
+  margin: 15px 15px 5px 15px;
+}
+
+#DefaultPrograms {
+  display: flex;
+}
+
+#DefaultPrograms form {
+  display: grid;
+  margin: 2px;
+  width: stretch;
+}
+
+#CustomPrograms {
+  overflow: hidden;
+  display: contents;
+}
+
+#CustomPrograms form {
+  display: flex;
+  margin: 2px;
+  justify-content: space-between;
+}
+
+#CustomPrograms form button[type="submit"] {
+  font-style: italic;
+  margin: 2px;  
 }
 
 #instrucoes {
