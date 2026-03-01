@@ -15,7 +15,10 @@ public class MicroondasController : Controller
 
     public IActionResult Index()
     {
-        return View(_aquecimento.ResetarStatusMicroondasSeInvalido());
+        var model = _aquecimento.ResetarStatusMicroondasSeInvalido();
+        // attach available custom programs read from JSON file
+        model.CustomPrograms = CustomProgramRepository.GetAll();
+        return View(model);
     }
 
 #region Funções básicas
@@ -107,38 +110,9 @@ public class MicroondasController : Controller
     [HttpPost]
     public IActionResult ExecuteCustomProgram(int programId)
     {
-        var programas = new List<AquecimentoCustomizadoModel>
-        {
-            new() {
-                Id = "1",
-                Nome = "Batata e beterraba",
-                Alimento = "Batata e beterraba",
-                Tempo = 180,
-                Potencia = 8,
-                CaractereProgresso = '*',
-                Instrucoes = "Corte a batata e a beterraba em pedaços médios para garantir um aquecimento uniforme."
-            },
-            new() {
-                Id = "2",
-                Nome = "Vegetais congelados",
-                Alimento = "Vegetais congelados",
-                Tempo = 240,
-                Potencia = 7,
-                CaractereProgresso = 'w',
-                Instrucoes = "Corte os vegetais congelados em pedaços médios para garantir um aquecimento uniforme."
-            },
-            new() {
-                Id = "3",
-                Nome = "Peixe",
-                Alimento = "Peixe",
-                Tempo = 300,
-                Potencia = 6,
-                CaractereProgresso = '?',
-                Instrucoes = "Corte o peixe em pedaços médios para garantir um aquecimento uniforme."
-            }
-        };
-
-        if (programas.FirstOrDefault(p => p.Id == programId.ToString()) is AquecimentoCustomizadoModel programa)
+        var programas = CustomProgramRepository.GetAll();
+        var programa = programas.FirstOrDefault(p => p.Id == programId.ToString());
+        if (programa != null)
         {
             _aquecimento.IniciarAquecimento(
                 TipoAquecimento.Customizado,
@@ -148,11 +122,9 @@ public class MicroondasController : Controller
                 programa.CaractereProgresso
             );
         }
-
         return RedirectToAction("Index");
     }
 
-    /*
     [HttpGet]
     public IActionResult ListaProgramas()
     {
@@ -160,7 +132,6 @@ public class MicroondasController : Controller
         return PartialView("_CustomProgramListModal", list);
     }
 
-    // GET form de criação
     [HttpGet]
     public IActionResult CriarProgramaCustomizado()
     {
@@ -168,34 +139,57 @@ public class MicroondasController : Controller
         return PartialView("_CustomProgramModal", model);
     }
 
-    // POST criação
     [HttpPost]
     [IgnoreAntiforgeryToken]
     public IActionResult CriarProgramaCustomizado(AquecimentoCustomizadoModel input)
     {
-        if (!input.Validate())
+        if(!input.Validate())
         {
-            ModelState.AddModelError("", input.GetErrorLog());
-            return Json(new { success = false, html = RenderPartialViewToString("_CustomProgramModal", input) });
+            foreach (var error in input.GetErrorLog())
+            {
+                ModelState.AddModelError(error.Key, error.Value);
+            }
+            return Json(new { 
+                                success = false, 
+                                html = RenderPartialViewToString("_CustomProgramModal", input) 
+                            });
         }
 
+        //recuperando os registros do JSON
         var existing = CustomProgramRepository.GetAll();
+
+        //validar nome e caractere de progresso para evitar duplicidade
         if (existing.Any(p => p.Nome.Equals(input.Nome, StringComparison.OrdinalIgnoreCase)))
         {
             ModelState.AddModelError("Nome", "Já existe um programa com esse nome.");
-            return Json(new { success = false, html = RenderPartialViewToString("_CustomProgramModal", input) });
+            return Json(new { 
+                                success = false, 
+                                html = RenderPartialViewToString("_CustomProgramModal", input) 
+                            });
         }
+
+        if (TipoAquecimentoConstants.CaracteresProgressoReservados.Contains(input.CaractereProgresso))
+        {
+            ModelState.AddModelError("CaractereProgresso", "Este caractere de progressão é reservado para os modos predefinidos.");
+            return Json(new { 
+                                success = false, 
+                                html = RenderPartialViewToString("_CustomProgramModal", input) 
+                            });
+        }
+
         if (existing.Any(p => p.CaractereProgresso == input.CaractereProgresso))
         {
             ModelState.AddModelError("CaractereProgresso", "Este caractere de progressão já está cadastrado.");
-            return Json(new { success = false, html = RenderPartialViewToString("_CustomProgramModal", input) });
+            return Json(new { 
+                                success = false, 
+                                html = RenderPartialViewToString("_CustomProgramModal", input) 
+                            });
         }
 
         CustomProgramRepository.Add(input);
         return Json(new { success = true });
     }
 
-    // GET form de edição
     [HttpGet]
     public IActionResult EditarPrograma(string id)
     {
@@ -211,7 +205,10 @@ public class MicroondasController : Controller
     {
         if (!input.Validate())
         {
-            ModelState.AddModelError("", input.GetErrorLog());
+            foreach (var error in input.GetErrorLog())
+            {
+                ModelState.AddModelError(error.Key, error.Value);
+            }
             return Json(new { success = false, html = RenderPartialViewToString("_CustomProgramModal", input) });
         }
 
@@ -231,7 +228,6 @@ public class MicroondasController : Controller
         return Json(new { success = true });
     }
 
-    // exclusão
     [HttpPost]
     [IgnoreAntiforgeryToken]
     public IActionResult DeletePrograma(string id)
@@ -240,23 +236,6 @@ public class MicroondasController : Controller
         return Json(new { success = true });
     }
 
-    // iniciar com um programa customizado
-    [HttpPost]
-    [IgnoreAntiforgeryToken]
-    public IActionResult UsarPrograma(string id)
-    {
-        var item = CustomProgramRepository.GetAll().FirstOrDefault(p => p.Id == id);
-        if (item != null)
-        {
-            _aquecimento.IniciarAquecimento(TipoAquecimento.Padrao,
-                                           item.Tempo,
-                                           item.Potencia,
-                                           item.CaractereProgresso);
-        }
-        return Json(new { success = true });
-    }
-
-    // helper para renderizar partial em string (usado para responder erros via ajax)
     private string RenderPartialViewToString(string viewName, object model)
     {
         ViewData.Model = model;
@@ -279,7 +258,6 @@ public class MicroondasController : Controller
         viewResult.View.RenderAsync(viewContext).GetAwaiter().GetResult();
         return writer.GetStringBuilder().ToString();
     }
-    */
 #endregion
 
 #region Atualização da Tela

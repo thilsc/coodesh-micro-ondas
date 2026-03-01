@@ -22,11 +22,14 @@ body {
 }
 
 form#startForm span.text-danger {
-    display: block;
     font-weight: bold;
     background: brown;
     color: white !important;
     text-align: center;
+}
+
+form#startForm span.text-danger:not(:empty) {
+    display: block;
 }
 
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
@@ -178,4 +181,11 @@ input:focus:enabled {
 
 .btn:active { 
   transform: translateY(0); 
+}
+
+.required:after{
+  content:" *";
+  font-weight:bold;
+  color:red;
+  cursor: pointer;
 }

@@ -1,25 +1,39 @@
-# Project Empty Template
+# Microondas Digital
 
-Este é um repositório de exemplo para você começar a desenvolver a questão, leia com atenção os requisitos do enunciado da questão na plataforma e seguia as boas práticas sobre como utilizar este repositório.
+Esta é uma aplicação ASP.NET Core MVC que simula o painel e funcionalidades de um micro-ondas digital. Permite iniciar, pausar, retomar e parar o aquecimento, além de escolher receitas predefinidas ou programas customizados.
 
+## Tecnologias
 
-## Readme do Repositório
+- Linguagem: C#
+- Framework: .NET 10 (ASP.NET Core MVC)
+- Front‑end: Razor views + Bootstrap 5
+- Sem banco de dados (dados em memória/repositório estático)
 
-- Deve conter o título do projeto
-- Uma descrição sobre o projeto em frase
-- Deve conter uma lista com linguagem, framework e/ou tecnologias usadas
-- Como instalar e usar o projeto (instruções)
-- Não esqueça o [.gitignore](https://www.toptal.com/developers/gitignore)
-- Se está usando github pessoal, referencie que é um challenge by coodesh:  
+## Executando o projeto
 
->  This is a challenge by [Coodesh](https://coodesh.com/)
+1. Certifique‑se de ter o [.NET 10 SDK](https://dotnet.microsoft.com/) instalado.
+2. Abra um terminal na raiz do repositório.
+3. Execute:
+   ```bash
+   dotnet build MicroondasDigital/MicroondasDigital.csproj
+   dotnet run --project MicroondasDigital/MicroondasDigital.csproj
+   ```
+4. Acesse `http://localhost:5161` no navegador.
 
-## Finalização e Instruções para a Apresentação
+> O projeto também pode ser aberto em VS Code e executado usando as tasks `build`/`watch` configuradas.
 
-1. Adicione o link do repositório com a sua solução na questão na plataforma
-2. Verifique se o Readme está bom e faça o commit final em seu repositório;
-3. Envie e aguarde as instruções para seguir. Caso o teste tenha apresentação de vídeo, dentro da tela de entrega será possível gravar após adicionar o link do repositório. Sucesso e boa sorte. =)
+## Funcionalidades atuais
 
+- Validação de entrada de tempo e potência com mensagens customizadas.
+- Painel de status com contagem regressiva.
+- Receitas rápidas (pipoca, leite, carne, frango, feijão).
+- Programas customizados configuráveis e executáveis (lista carregada de `customPrograms.json`).
+
+## Observações
+
+Este repositório faz parte de um desafio técnico; ao submeter uma solução no Coodesh, inclua o link ao código e siga as instruções da plataforma.
+
+> This is a challenge by [Coodesh](https://coodesh.com/)
 
 ## Suporte
 

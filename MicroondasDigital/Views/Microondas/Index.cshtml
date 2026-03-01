@@ -47,7 +47,7 @@
     <div class="card">
       <h5 class="card-title">
         <span class="col-10">Programas</span>
-        <button id="openPrograms" class="btn btn-warning col-2" disabled="@(Model.IsRunning())">Novo...</button>
+        <button id="openCustomPrograms" class="btn btn-warning col-2" disabled="@(Model.IsRunning())">Novo...</button>
       </h5>
 
       <div class="card-body">
@@ -62,10 +62,11 @@
 
         <div id="CustomPrograms">
             <form asp-action="ExecuteCustomProgram" method="post">
-                <button type="submit" name="programId" value="1" class="btn btn-secondary" disabled="@(Model.IsRunning())">Batata e beterraba</button>
-                <button type="submit" name="programId" value="2" class="btn btn-secondary" disabled="@(Model.IsRunning())">Vegetais congelados</button>
-                <button type="submit" name="programId" value="3" class="btn btn-secondary" disabled="@(Model.IsRunning())">Peixe</button>
-            </form>
+            @foreach (var prog in Model.CustomPrograms)
+            {
+                <button type="submit" name="programId" value="@prog.Id" class="btn btn-secondary" disabled="@(Model.IsRunning())">@prog.Nome</button>
+            }
+            </form>            
         </div>
 
       </div>
@@ -96,9 +97,8 @@
     }
 </style>
 
-<!-- Modais para gerenciamento de programas customizados -- >
+<!-- Modais para gerenciamento de programas customizados -->
 <div id="programModalContainer"></div>
--->
 
 <script>
     let intervalo;
@@ -169,55 +169,45 @@
 
     iniciarPolling();
 
-    /** Gerenciamento de programas customizados *-/
-    document.getElementById('openPrograms').addEventListener('click', loadProgramList);
+    /** Gerenciamento de programas customizados **/
+    document.getElementById('openCustomPrograms').addEventListener('click', loadProgramList);
 
     function loadProgramList() {
-        fetch('/Microondas/ListaProgramas', { credentials: 'same-origin' })
+
+        fetch('/Microondas/ListaProgramas')
             .then(r => r.text())
             .then(html => {
                 document.getElementById('programModalContainer').innerHTML = html;
                 var modal = new bootstrap.Modal(document.getElementById('programListModal'));
                 modal.show();
-                attachListHandlers();
-            });
-    }
 
-    function attachListHandlers() {
-        const newBtn = document.getElementById('btnNewProgram');
-        if (newBtn) newBtn.addEventListener('click', () => loadProgramModal());
-        document.querySelectorAll('.useProgram').forEach(btn => {
-            btn.addEventListener('click', () => {
-                fetch('/Microondas/UsarPrograma', {
-                    method: 'POST',
-                    credentials: 'same-origin',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: `id=${btn.dataset.id}`
-                }).then(() => {
-                    // after starting program, go back to index so status updates
-                    window.location.reload();
+                /* Handlers dos programas */ 
+                const newBtn = document.getElementById('btnNewProgram');
+
+                if (newBtn) newBtn.addEventListener('click', () => loadProgramModal());
+
+                document.querySelectorAll('.editProgram').forEach(btn => {
+                    btn.addEventListener('click', () => loadProgramModal(btn.dataset.id));
+                });
+
+                document.querySelectorAll('.deleteProgram').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        if (confirm('Deseja realmente excluir este programa?')) {
+                            fetch('/Microondas/DeletePrograma', {
+                                method: 'POST',
+                                credentials: 'same-origin',
+                                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                                body: `id=${btn.dataset.id}`
+                            }).then(() => loadProgramList());
+                        }
+                    });
                 });
             });
-        });
-        document.querySelectorAll('.editProgram').forEach(btn => {
-            btn.addEventListener('click', () => loadProgramModal(btn.dataset.id));
-        });
-        document.querySelectorAll('.deleteProgram').forEach(btn => {
-            btn.addEventListener('click', () => {
-                if (confirm('Deseja realmente excluir este programa?')) {
-                    fetch('/Microondas/DeletePrograma', {
-                        method: 'POST',
-                        credentials: 'same-origin',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: `id=${btn.dataset.id}`
-                    }).then(() => loadProgramList());
-                }
-            });
-        });
     }
 
     function loadProgramModal(id) {
-        const url = id ? `/Microondas/EditPrograma?id=${id}` : '/Microondas/CriarProgramaCustomizado';
+        const url = id ? `/Microondas/EditarPrograma?id=${id}` : '/Microondas/CriarProgramaCustomizado';
+
         fetch(url)
             .then(r => r.text())
             .then(html => {
@@ -234,16 +224,17 @@
                     fetch(action, { method: 'POST', body: data })
                         .then(r => r.json())
                         .then(result => {
+
                             if (result.success) {
                                 modal.hide();
+
                                 loadProgramList();
                             } else if (result.html) {
-                                // replace modal html with returned html containing errors
                                 document.getElementById('programModalContainer').innerHTML = result.html;
-                                // reshow and reattach
                                 var newModalEl = document.getElementById('programModal');
                                 var newModal = new bootstrap.Modal(newModalEl);
                                 newModal.show();
+
                                 loadProgramModalHandlers(newModalEl);
                             }
                         });
@@ -261,21 +252,30 @@
             fetch(action, { method: 'POST', body: data })
                 .then(r => r.json())
                 .then(result => {
+
                     if (result.success) {
                         var newModal = bootstrap.Modal.getInstance(modalEl);
                         newModal.hide();
+                        
                         loadProgramList();
+
                     } else if (result.html) {
                         document.getElementById('programModalContainer').innerHTML = result.html;
                         var newModalEl = document.getElementById('programModal');
                         var newModal = new bootstrap.Modal(newModalEl);
                         newModal.show();
+                        
                         loadProgramModalHandlers(newModalEl);
                     }
                 });
         });
     }
-    **/
+
+    $('input[required], select[required],textarea[required]').each(
+        function(){
+            $($(this).parent()).find('label').addClass('required')
+        }
+    );
 </script>
 
 

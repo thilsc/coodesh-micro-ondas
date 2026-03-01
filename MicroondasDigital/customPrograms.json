@@ -1,0 +1,38 @@
+[
+  {
+    "Id": "1",
+    "Nome": "Batata e beterraba",
+    "Alimento": "Batata e beterraba",
+    "Tempo": 180,
+    "Potencia": 8,
+    "CaractereProgresso": "*",
+    "Instrucoes": "Corte a batataaaaaaaaaaaaaa"
+  },
+  {
+    "Id": "2",
+    "Nome": "Vegetais congelados",
+    "Alimento": "Vegetais congelados",
+    "Tempo": 240,
+    "Potencia": 7,
+    "CaractereProgresso": "w",
+    "Instrucoes": "Corte os vegetais congelados em peda\u00E7os m\u00E9dios para garantir um aquecimento uniforme."
+  },
+  {
+    "Id": "3",
+    "Nome": "Peixe",
+    "Alimento": "Peixe",
+    "Tempo": 300,
+    "Potencia": 6,
+    "CaractereProgresso": "?",
+    "Instrucoes": "Corte o peixe em peda\u00E7os m\u00E9dios para garantir um aquecimento uniforme."
+  },
+  {
+    "Id": "9c062e29-4187-4a83-8d85-3adc802a524f",
+    "Nome": "Pudim",
+    "Alimento": "Pudim",
+    "Tempo": 18000,
+    "Potencia": 10,
+    "CaractereProgresso": "\u0022",
+    "Instrucoes": "baaaaaa"
+  }
+]

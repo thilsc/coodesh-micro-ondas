@@ -14,6 +14,9 @@ public class MicroondasViewModel : BaseViewModel
     public string Instrucoes {get; set; } = string.Empty;
     public string Display { get; set; } = string.Empty;
 
+    // lista de programas customizados carregados do JSON
+    public List<AquecimentoCustomizadoModel> CustomPrograms { get; set; } = new();
+
 protected override IEnumerable<ValidationResult> GetValidations()
     {
         return
