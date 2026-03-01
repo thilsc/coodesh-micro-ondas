@@ -1,6 +1,6 @@
+using MicroondasDigital.Exceptions;
 using MicroondasDigital.Models.Enums;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
 
 namespace MicroondasDigital.Models;
 
@@ -104,6 +104,13 @@ public class AquecimentoModel
 
     public void IniciarAquecimento(MicroondasViewModel input)
     {
+
+        if (!input.Validate())
+        {
+            var erros = string.Join(" | ", input.GetErrorLog().Select(e => $"{e.Key}: {e.Value}"));
+            throw new BusinessException($"Erro de validação ao iniciar aquecimento: {erros}");
+        }
+        
         IniciarAquecimento(input.ModoAquecimento, 
                            input.TempoAquecimento, 
                            input.Potencia, 

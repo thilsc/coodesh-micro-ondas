@@ -30,9 +30,27 @@
     "Id": "9c062e29-4187-4a83-8d85-3adc802a524f",
     "Nome": "Pudim",
     "Alimento": "Pudim",
-    "Tempo": 18000,
+    "Tempo": 1800,
     "Potencia": 10,
-    "CaractereProgresso": "\u0022",
+    "CaractereProgresso": "#",
     "Instrucoes": "N\u00E3o colocar no pote de alum\u00EDnio"
+  },
+  {
+    "Id": "bf8f1093-ae4e-492e-98b0-60d002826992",
+    "Nome": "Biscoito de Polvilho",
+    "Alimento": "bp",
+    "Tempo": 15,
+    "Potencia": 2,
+    "CaractereProgresso": "/",
+    "Instrucoes": "aaa"
+  },
+  {
+    "Id": "58a2d272-bb35-44ce-a975-8a1e12ebd3fc",
+    "Nome": "Gelatina",
+    "Alimento": "gel",
+    "Tempo": 50,
+    "Potencia": 6,
+    "CaractereProgresso": "y",
+    "Instrucoes": null
   }
 ]

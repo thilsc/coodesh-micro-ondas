@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using MicroondasDigital.Models;
 using MicroondasDigital.Models.Enums;
+using MicroondasDigital.Exceptions;
+using MicroondasDigital.Utils;
 
 namespace MicroondasDigital.Controllers;
 
@@ -15,13 +17,48 @@ public class MicroondasController : Controller
 
     public IActionResult Index()
     {
-        var model = _aquecimento.ResetarStatusMicroondasSeInvalido();
-        // attach available custom programs read from JSON file
+        var model = _aquecimento.ResetarStatusMicroondasSeInvalido();        
         model.CustomPrograms = CustomProgramRepository.GetAll();
+
         return View(model);
     }
 
 #region Funções básicas
+    private JsonValidationResult ValidarProgramaCustomizado(AquecimentoCustomizadoModel input)
+    {
+        var existing = CustomProgramRepository.GetAll();
+        bool isEdit = !string.IsNullOrWhiteSpace(input.Id);
+
+        if (existing.Any(p => (!isEdit || p.Id != input.Id)
+                               && p.Nome.Equals(input.Nome, StringComparison.OrdinalIgnoreCase)))
+        {
+            BusinessException ex = new BusinessException("Já existe um programa com esse nome.");
+            Logger.Log(ex);
+            ModelState.AddModelError("Nome", ex.Message);
+            
+            return JsonValidationResult.CreateError(RenderPartialViewToString("_CustomProgramModal", input));
+        }
+        if (existing.Any(p => (!isEdit || p.Id != input.Id)
+                               && p.CaractereProgresso == input.CaractereProgresso))
+        {
+            BusinessException ex = new BusinessException("Este caractere de progressão já está cadastrado.");
+            Logger.Log(ex);
+            ModelState.AddModelError("CaractereProgresso", ex.Message);
+
+            return JsonValidationResult.CreateError(RenderPartialViewToString("_CustomProgramModal", input));
+        }
+        if (TipoAquecimentoConstants.CaracteresProgressoReservados.Contains(input.CaractereProgresso))
+        {
+            BusinessException ex = new BusinessException("Este caractere de progressão é reservado para os modos predefinidos.");
+            Logger.Log(ex);
+            ModelState.AddModelError("CaractereProgresso", ex.Message);
+
+            return JsonValidationResult.CreateError(RenderPartialViewToString("_CustomProgramModal", input));
+        }
+
+        return JsonValidationResult.CreateSuccess();
+    }
+
     [HttpPost]
     public IActionResult Iniciar(MicroondasViewModel input)
     {
@@ -149,45 +186,17 @@ public class MicroondasController : Controller
             {
                 ModelState.AddModelError(error.Key, error.Value);
             }
-            return Json(new { 
-                                success = false, 
-                                html = RenderPartialViewToString("_CustomProgramModal", input) 
-                            });
+            
+            return JsonValidationResult.CreateError(RenderPartialViewToString("_CustomProgramModal", input));
         }
 
-        //recuperando os registros do JSON
-        var existing = CustomProgramRepository.GetAll();
-
-        //validar nome e caractere de progresso para evitar duplicidade
-        if (existing.Any(p => p.Nome.Equals(input.Nome, StringComparison.OrdinalIgnoreCase)))
+        JsonValidationResult validationResult = ValidarProgramaCustomizado(input);
+        if(validationResult.IsValid)
         {
-            ModelState.AddModelError("Nome", "Já existe um programa com esse nome.");
-            return Json(new { 
-                                success = false, 
-                                html = RenderPartialViewToString("_CustomProgramModal", input) 
-                            });
+            CustomProgramRepository.Add(input);
         }
-
-        if (TipoAquecimentoConstants.CaracteresProgressoReservados.Contains(input.CaractereProgresso))
-        {
-            ModelState.AddModelError("CaractereProgresso", "Este caractere de progressão é reservado para os modos predefinidos.");
-            return Json(new { 
-                                success = false, 
-                                html = RenderPartialViewToString("_CustomProgramModal", input) 
-                            });
-        }
-
-        if (existing.Any(p => p.CaractereProgresso == input.CaractereProgresso))
-        {
-            ModelState.AddModelError("CaractereProgresso", "Este caractere de progressão já está cadastrado.");
-            return Json(new { 
-                                success = false, 
-                                html = RenderPartialViewToString("_CustomProgramModal", input) 
-                            });
-        }
-
-        CustomProgramRepository.Add(input);
-        return Json(new { success = true });
+        
+        return validationResult;
     }
 
     [HttpGet]
@@ -195,6 +204,7 @@ public class MicroondasController : Controller
     {
         var item = CustomProgramRepository.GetAll().FirstOrDefault(p => p.Id == id);
         if (item == null) return NotFound();
+        
         return PartialView("_CustomProgramModal", item);
     }
 
@@ -207,25 +217,20 @@ public class MicroondasController : Controller
         {
             foreach (var error in input.GetErrorLog())
             {
-                ModelState.AddModelError(error.Key, error.Value);
+                BusinessException ex = new BusinessException(error.Value);
+                Logger.Log(ex);
+                ModelState.AddModelError(error.Key, ex.Message);
             }
-            return Json(new { success = false, html = RenderPartialViewToString("_CustomProgramModal", input) });
+            return JsonValidationResult.CreateError(RenderPartialViewToString("_CustomProgramModal", input));
         }
 
-        var existing = CustomProgramRepository.GetAll();
-        if (existing.Any(p => p.Id != input.Id && p.Nome.Equals(input.Nome, StringComparison.OrdinalIgnoreCase)))
+        JsonValidationResult validationResult = ValidarProgramaCustomizado(input);
+        if(validationResult.IsValid)
         {
-            ModelState.AddModelError("Nome", "Já existe um programa com esse nome.");
-            return Json(new { success = false, html = RenderPartialViewToString("_CustomProgramModal", input) });
+            CustomProgramRepository.Update(input);
         }
-        if (existing.Any(p => p.Id != input.Id && p.CaractereProgresso == input.CaractereProgresso))
-        {
-            ModelState.AddModelError("CaractereProgresso", "Este caractere de progressão já está cadastrado.");
-            return Json(new { success = false, html = RenderPartialViewToString("_CustomProgramModal", input) });
-        }
-
-        CustomProgramRepository.Update(input);
-        return Json(new { success = true });
+        
+        return validationResult;
     }
 
     [HttpPost]
@@ -233,7 +238,7 @@ public class MicroondasController : Controller
     public IActionResult DeletePrograma(string id)
     {
         CustomProgramRepository.Delete(id);
-        return Json(new { success = true });
+        return JsonValidationResult.CreateSuccess();
     }
 
     private string RenderPartialViewToString(string viewName, object model)
