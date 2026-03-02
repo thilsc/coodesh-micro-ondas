@@ -1,9 +1,12 @@
 using MicroondasDigital.Middleware;
+using MicroondasDigital.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<AquecimentoModel>(); 
 
 //Enable Session
 builder.Services.AddDistributedMemoryCache();

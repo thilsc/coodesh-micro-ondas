@@ -12,7 +12,7 @@ public class MicroondasController : Controller
 
     public MicroondasController()
     {
-        _aquecimento = new AquecimentoModel(this);      
+        _aquecimento = new AquecimentoModel(new HttpContextAccessor());
     }
 
     public IActionResult Index()
