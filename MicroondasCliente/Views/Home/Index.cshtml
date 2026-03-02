@@ -1,0 +1,30 @@
+﻿@{
+    ViewData["Title"] = "Painel";
+    bool isAuth = ViewBag.IsAuthenticated ?? false;
+}
+
+<div class="text-center mt-4">
+    <h1 class="display-4">Micro-ondas Digital</h1>
+    
+    @if(isAuth)
+    {
+        <div class="alert alert-success mt-4">
+            <h4 class="alert-heading">✅ Sistema Destravado</h4>
+            <p>Você está autenticado e pode operar o micro-ondas.</p>
+        </div>
+        
+        <div class="mt-4 p-4 border rounded bg-light">
+            <!-- AQUI ENTRARÁ O TECLADO DO MICRO-ONDAS NA ETAPA 3 -->
+            <h3>Painel de Controle Liberado</h3>
+            <p>(Interface do Micro-ondas será adicionada aqui em breve)</p>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning mt-4">
+            <h4 class="alert-heading">🔒 Sistema Bloqueado</h4>
+            <p>Por favor, faça login para operar o micro-ondas.</p>
+            <a asp-controller="Account" asp-action="Login" class="btn btn-primary mt-2">Fazer Login</a>
+        </div>
+    }
+</div>
