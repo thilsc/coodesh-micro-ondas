@@ -1,3 +1,6 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using MicroondasDigital.Middleware;
 using MicroondasDigital.Models;
 
@@ -16,6 +19,37 @@ builder.Services.AddSession(options => {
                                             options.Cookie.IsEssential = true;
                                        });
 
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>()!;
+        
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtSettings.Issuer,
+            ValidAudience = jwtSettings.Audience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey))
+        };
+
+        // Para debug (remove em produção)
+        options.Events = new JwtBearerEvents
+        {
+            OnAuthenticationFailed = context =>
+            {
+                Console.WriteLine($"JWT Fail: {context.Exception.Message}");
+                return Task.CompletedTask;
+            }
+        };
+    });
+
+builder.Services.AddAuthorization();
+
 var app = builder.Build();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
@@ -28,16 +62,31 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+// ========================================
+// CRÍTICO: UseAuthentication ANTES de Authorization
+// ========================================
+app.UseAuthentication();
+app.UseAuthorization();
+// ========================================
+
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthorization();
 app.MapStaticAssets();
 app.UseSession();
+
+//API antes do MVC para evitar conflitos de rotas
+app.MapControllerRoute(
+    name: "api",
+    pattern: "api/v1/{controller}/{action=Index}/{id?}"); 
+
+//MVC
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Microondas}/{action=Index}/{id?}")
     .WithStaticAssets();
 
+app.MapControllers();
 
 app.Run();
