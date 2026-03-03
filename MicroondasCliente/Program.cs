@@ -1,13 +1,15 @@
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddTransient<MicroondasCliente.Security.AuthHeaderHandler>();
 
 // 1. Configurar HttpClient para a API
 builder.Services.AddHttpClient("MicroondasApi", client =>
 {
-    // A porta da sua API (ajuste se mudar)
-    client.BaseAddress = new Uri("http://localhost:5161/api/v1/"); 
-});
+    client.BaseAddress = new Uri("http://localhost:5161/api/v1/MicroondasApi/");
+})
+.AddHttpMessageHandler<MicroondasCliente.Security.AuthHeaderHandler>();
 
 // 2. Habilitar Session
 builder.Services.AddDistributedMemoryCache();
@@ -19,6 +21,9 @@ builder.Services.AddSession(options =>
 });
 
 var app = builder.Build();
+
+// Inicializar ApiResponseHelper
+MicroondasCliente.Models.ApiResponseHelper.Initialize(app.Services.GetRequiredService<IHttpClientFactory>());
 
 if (!app.Environment.IsDevelopment())
 {

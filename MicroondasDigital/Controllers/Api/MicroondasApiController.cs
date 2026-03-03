@@ -4,10 +4,10 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-
 using MicroondasDigital.Models;
 using MicroondasDigital.Models.Enums;
-using System.Runtime.InteropServices.Marshalling;
+using MicroondasDigital.Utils;
+using MicroondasDigital.Exceptions;
 
 namespace MicroondasDigital.Controllers.Api;
 
@@ -15,107 +15,128 @@ namespace MicroondasDigital.Controllers.Api;
 [Route("api/v1/[controller]")]
 public class MicroondasApiController : ControllerBase
 {
-    private readonly IConfiguration _config;
-    
-    // Instanciamos o model passando "null" porque na API nós gerenciaremos a session diretamente
-    // ou se você adaptou o AquecimentoModel para receber o Contexto, adapte aqui.
-    public MicroondasApiController(IConfiguration config)
+    private readonly IConfiguration _configuration;
+    private readonly string _userName = "admin";
+    private readonly string _password = "123456";
+
+    private static void ConfigurarAquecimentoPredefinido(MicroondasViewModel model, TipoAquecimento modoAquecimento)
     {
-        _config = config;
+        model.TempoAquecimento   = TipoAquecimentoConstants.GetTempoAquecimento(modoAquecimento);
+        model.Potencia           = TipoAquecimentoConstants.GetPotencia(modoAquecimento);
+        model.Instrucoes         = TipoAquecimentoConstants.GetInstrucoes(modoAquecimento);
+        model.CaractereProgresso = TipoAquecimentoConstants.GetProgressChar(modoAquecimento);
+        model.StatusEnum         = StatusAquecimento.Aquecendo;
+        model.Display            = "";
     }
 
-    // ==========================================
-    // AUTHENTICATION ENDPOINTS
-    // ==========================================
+    public MicroondasApiController(IConfiguration config)
+    {
+        _configuration = config;
+    }
+
+#region Métodos de autenticação
     [HttpPost("auth/login")]
     [AllowAnonymous]
     public IActionResult Login([FromBody] LoginViewModel model)
     {
-        // Regra do desafio: SHA256. 
-        // Hash de "123456" é 8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92
-        string hashEsperado = "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92";
-
-        if (model.Username != "admin" || Sha256Hash(model.Password) != hashEsperado)
+        if ( !model.Username.Equals(_userName) || 
+            (!HashHelper.CalcularSha256(model.Password).Equals(HashHelper.CalcularSha256(_password))) )
         {
-            return Unauthorized(new { success = false, message = "Credenciais inválidas" });
+            return Unauthorized(new { IsAuthenticated = false, message = "Credenciais inválidas" });
         }
 
-        var token = GenerateJwtToken(model.Username);
-        
+        //var token = GenerateJwtToken(model.Username);
+        var issuer    = _configuration["Jwt:Issuer"];
+        var audience  = _configuration["Jwt:Audience"];
+        var secretKey = _configuration["Jwt:SecretKey"];
+
+        if (string.IsNullOrEmpty(secretKey))
+        {
+            return StatusCode(500, "SecretKey do JWT não configurada no servidor.");
+        }
+
+        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+        var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+        var claims = new[]
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, model.Username),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+        };
+
+        DateTime DefaultSessionTime = DateTime.UtcNow.AddMinutes(60);  //máx 1 hora na sesssão
+
+        var tokenDescriptor = new SecurityTokenDescriptor 
+        {
+            Subject = new ClaimsIdentity(claims),
+            Expires = DefaultSessionTime,
+            Issuer = issuer,
+            Audience = audience,
+            SigningCredentials = credentials
+        };
+
+        var tokenHandler  = new JwtSecurityTokenHandler();
+        var securityToken = tokenHandler.CreateToken(tokenDescriptor);
+        var tokenString   = tokenHandler.WriteToken(securityToken);
+
         return Ok(new AuthResponse 
         { 
-            Token = token,
-            Expires = DateTime.UtcNow.AddMinutes(60),
+            Token = tokenString,
+            Expires = tokenDescriptor.Expires ?? DefaultSessionTime, 
             IsAuthenticated = true
         });
     }
-
+    
     [HttpGet("auth/check")]
     [Authorize]
     public IActionResult CheckAuth()
     {
         return Ok(new { success = true, message = "Token válido", user = User.Identity?.Name });
     }
+#endregion
 
-    // ==========================================
-    // STATUS ENDPOINTS
-    // ==========================================
-    [HttpGet("status")]
-    [Authorize]
-    public IActionResult GetStatus()
+#region Funções básicas
+    private JsonValidationResult ValidarProgramaCustomizado(AquecimentoCustomizadoModel input)
     {
-        var model = SessionHelper.GetStatusMicroondas(HttpContext);
-        
-        return Ok(new 
-        {
-            tempoFormatado = $"{model.TempoAquecimento / 60:D2}:{model.TempoAquecimento % 60:D2}",
-            display = model.Display,
-            status = model.Status,
-            isRunning = model.IsRunning(),
-            isPaused = model.IsPaused()
-        });
-    }
+        var existing = CustomProgramRepository.GetAll();
+        bool isEdit = !string.IsNullOrWhiteSpace(input.Id);
 
-    [HttpPost("tick")]
-    [Authorize]
-    public IActionResult Tick()
-    {
-        var model = SessionHelper.GetStatusMicroondas(HttpContext);
-        
-        if (model.IsRunning() && !model.IsPaused() && model.TempoAquecimento > 0)
+        if (existing.Any(p => (!isEdit || p.Id != input.Id)
+                               && p.Nome.Equals(input.Nome, StringComparison.OrdinalIgnoreCase)))
         {
-            model.TempoAquecimento--;
-            model.Display += new string(model.CaractereProgresso, model.Potencia);
+            BusinessException ex = new BusinessException("Já existe um programa com esse nome.");
+            Logger.Log(ex);
+            ModelState.AddModelError("Nome", ex.Message);
             
-            if (model.TempoAquecimento <= 0)
-            {
-                model.StatusEnum = StatusAquecimento.Parado;
-                model.Display += " Aquecimento concluído!";
-            }
+            return JsonValidationResult.CreateError(ex.Message);
         }
-        
-        SessionHelper.SetStatusMicroondas(HttpContext, model);
-        
-        return Ok(new 
+        if (existing.Any(p => (!isEdit || p.Id != input.Id)
+                               && p.CaractereProgresso == input.CaractereProgresso))
         {
-            tempoFormatado = $"{model.TempoAquecimento / 60:D2}:{model.TempoAquecimento % 60:D2}",
-            display = model.Display,
-            status = model.Status,
-            isRunning = model.IsRunning(),
-            isPaused = model.IsPaused()
-        });
+            BusinessException ex = new BusinessException("Este caractere de progressão já está cadastrado.");
+            Logger.Log(ex);
+            ModelState.AddModelError("CaractereProgresso", ex.Message);
+
+            return JsonValidationResult.CreateError(ex.Message);
+        }
+        if (TipoAquecimentoConstants.CaracteresProgressoReservados.Contains(input.CaractereProgresso))
+        {
+            BusinessException ex = new BusinessException("Este caractere de progressão é reservado para os modos predefinidos.");
+            Logger.Log(ex);
+            ModelState.AddModelError("CaractereProgresso", ex.Message);
+
+            return JsonValidationResult.CreateError(ex.Message);
+        }
+
+        return JsonValidationResult.CreateSuccess();
     }
 
-    // ==========================================
-    // CONTROL ENDPOINTS
-    // ==========================================
     [HttpPost("iniciar")]
     [Authorize]
     public IActionResult Iniciar([FromBody] MicroondasViewModel input)
     {
         var model = SessionHelper.GetStatusMicroondas(HttpContext);
 
-        // Se está pausado, retoma
         if (model.StatusEnum == StatusAquecimento.Pausado)
         {
             model.StatusEnum = StatusAquecimento.Aquecendo;
@@ -123,7 +144,11 @@ public class MicroondasApiController : ControllerBase
             return Ok(new { success = true, message = "Retomado" });
         }
 
-        // Se é novo
+        if (input.TempoAquecimento < 1)
+        {
+            return BadRequest(new { success = false, errors = new { TempoAquecimento = "O Tempo não pode ser menor que 1." } });
+        }
+
         model.TempoAquecimento = input.TempoAquecimento;
         model.Potencia = input.Potencia == 0 ? Constants.PotenciaPadrao : input.Potencia;
         model.StatusEnum = StatusAquecimento.Parado;
@@ -162,9 +187,9 @@ public class MicroondasApiController : ControllerBase
         return Ok(new { success = true, message = "Início Rápido acionado" });
     }
 
-    [HttpPost("pausar-parar")]
+    [HttpPost("pausar")]
     [Authorize]
-    public IActionResult PausarParar()
+    public IActionResult Pausar()
     {
         var model = SessionHelper.GetStatusMicroondas(HttpContext);
 
@@ -172,56 +197,236 @@ public class MicroondasApiController : ControllerBase
         {
             model.StatusEnum = StatusAquecimento.Pausado;
             SessionHelper.SetStatusMicroondas(HttpContext, model);
-            return Ok(new { success = true, message = "Pausado" });
+            return Ok(new { success = true, message = "Aquecimento pausado." });
         }
-
-        // Se pausado ou parado, limpa (cancela)
-        SessionHelper.ClearStatusMicroondas(HttpContext);
-        return Ok(new { success = true, message = "Cancelado/Limpado" });
+        return BadRequest(new { success = false, message = "Não é possível pausar neste estado." });
     }
 
-    // ==========================================
-    // CUSTOM PROGRAMS (OPCIONAL API EXPOSE)
-    // ==========================================
+    [HttpPost("retomar")]
+    [Authorize]
+    public IActionResult Retomar()
+    {
+        var model = SessionHelper.GetStatusMicroondas(HttpContext);
+
+        if (model.StatusEnum == StatusAquecimento.Pausado)
+        {
+            model.StatusEnum = StatusAquecimento.Aquecendo;
+            SessionHelper.SetStatusMicroondas(HttpContext, model);
+            return Ok(new { success = true, message = "Aquecimento retomado." });
+        }
+        return BadRequest(new { success = false, message = "Não é possível retomar neste estado." });
+    }
+
+    [HttpPost("parar")]
+    [Authorize]
+    public IActionResult Parar()
+    {
+        SessionHelper.ClearStatusMicroondas(HttpContext);
+        return Ok(new { success = true, message = "Parado." });
+    }        
+#endregion
+
+#region Receitas
+    [HttpPost("aquecer-pipoca")]
+    [Authorize]
+    public IActionResult AquecerPipoca()
+    {
+        var model = SessionHelper.GetStatusMicroondas(HttpContext);
+        ConfigurarAquecimentoPredefinido(model, TipoAquecimento.Pipoca);
+        SessionHelper.SetStatusMicroondas(HttpContext, model);
+
+        return Ok(new { success = true, message = "Pipoca aquecendo" });
+    }
+    
+    [HttpPost("aquecer-leite")]
+    [Authorize]
+    public IActionResult AquecerLeite()
+    {
+        var model = SessionHelper.GetStatusMicroondas(HttpContext);
+        ConfigurarAquecimentoPredefinido(model, TipoAquecimento.Leite);
+        SessionHelper.SetStatusMicroondas(HttpContext, model);
+
+        return Ok(new { success = true, message = "Leite aquecendo" });
+    }
+
+    [HttpPost("aquecer-carne")]
+    [Authorize]
+    public IActionResult AquecerCarne()
+    {
+        var model = SessionHelper.GetStatusMicroondas(HttpContext);
+        ConfigurarAquecimentoPredefinido(model, TipoAquecimento.Carne);
+        SessionHelper.SetStatusMicroondas(HttpContext, model);
+
+        return Ok(new { success = true, message = "Carne aquecendo" });
+    }
+
+    [HttpPost("aquecer-frango")]
+    [Authorize]
+    public IActionResult AquecerFrango()
+    {
+        var model = SessionHelper.GetStatusMicroondas(HttpContext);
+        ConfigurarAquecimentoPredefinido(model, TipoAquecimento.Frango);
+        SessionHelper.SetStatusMicroondas(HttpContext, model);
+
+        return Ok(new { success = true, message = "Frango aquecendo" });
+    }
+
+    [HttpPost("aquecer-feijao")]
+    [Authorize]
+    public IActionResult AquecerFeijao()
+    {
+        var model = SessionHelper.GetStatusMicroondas(HttpContext);
+        ConfigurarAquecimentoPredefinido(model, TipoAquecimento.Feijao);
+        SessionHelper.SetStatusMicroondas(HttpContext, model);
+
+        return Ok(new { success = true, message = "Feijão aquecendo" });
+    }
+#endregion
+
+#region Programas Customizados
     [HttpGet("programas")]
     [Authorize]
-    public IActionResult GetProgramas()
+    public IActionResult ListaProgramas()
     {
         var list = CustomProgramRepository.GetAll();
         return Ok(list);
     }
 
-    // ==========================================
-    // HELPERS
-    // ==========================================
-    private static string Sha256Hash(string input)
+    [HttpPost("executar-programa")]
+    [Authorize]
+    [IgnoreAntiforgeryToken]
+    public IActionResult ExecuteCustomProgram(string id)
     {
-        using var sha256 = System.Security.Cryptography.SHA256.Create();
-        var bytes = Encoding.UTF8.GetBytes(input);
-        var hash = sha256.ComputeHash(bytes);
-        return Convert.ToHexString(hash).ToLowerInvariant();
+        var programas = CustomProgramRepository.GetAll();
+        var programa = programas.FirstOrDefault(p => p.Id == id);
+        if (programa == null)        {
+            return NotFound(new { success = false, message = "Programa não encontrado." });
+        }
+        var model = SessionHelper.GetStatusMicroondas(HttpContext);
+        model.TempoAquecimento = programa.Tempo;
+        model.Potencia = programa.Potencia;
+        model.StatusEnum = StatusAquecimento.Aquecendo;
+        model.Display = "";
+
+        SessionHelper.SetStatusMicroondas(HttpContext, model);
+        return Ok(new { success = true, message = "Programa em execução.", programa });
     }
 
-    private string GenerateJwtToken(string username)
+    [HttpPost("criar-programa")]
+    [Authorize]
+    [IgnoreAntiforgeryToken]
+    public IActionResult CriarProgramaCustomizado(AquecimentoCustomizadoModel input)
     {
-        // Se colocar a config no appsettings.json use _config["Jwt:Key"], senão use hardcoded para o teste:
-        var jwtKey = _config["Jwt:Key"] ?? "MicroondasSuperSecretKey1234567890+";
-        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
-        var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-
-        var claims = new[]
+        if (string.IsNullOrEmpty(input.Nome))
         {
-            new Claim(JwtRegisteredClaimNames.Sub, username),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            return BadRequest(new { success = false, errors = new { Nome = "O nome do programa é obrigatório." } });
+        }
+        if (input.Tempo < 1)
+        {
+            return BadRequest(new { success = false, errors = new { Tempo = "O tempo deve ser maior que 0." } });
+        }
+        if (input.Potencia < 1 || input.Potencia > 10)
+        {
+            return BadRequest(new { success = false, errors = new { Potencia = "A potência deve ser entre 1 e 10." } });
+        }
+
+        var programa = new AquecimentoCustomizadoModel
+        {
+            Id = Guid.NewGuid().ToString(),
+            Nome = input.Nome,
+            Tempo = input.Tempo,
+            Potencia = input.Potencia,
+            Instrucoes = input.Instrucoes,
+            CaractereProgresso = input.CaractereProgresso
         };
 
-        var token = new JwtSecurityToken(
-            issuer: _config["Jwt:Issuer"] ?? "MicroondasAPI",
-            audience: _config["Jwt:Audience"] ?? "MicroondasClient",
-            claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(60),
-            signingCredentials: credentials);
-
-        return new JwtSecurityTokenHandler().WriteToken(token);
+        CustomProgramRepository.Add(programa);
+        return Ok(new { success = true, message = "Programa criado com sucesso.", programa });
     }
+
+    [HttpPost("editar-programa")]
+    [Authorize]
+    [IgnoreAntiforgeryToken]
+    public IActionResult EditarPrograma(AquecimentoCustomizadoModel input)
+    {
+        if (!input.Validate())
+        {
+            var errors = input.GetErrorLog();
+            return BadRequest(new { success = false, errors = errors });
+        }
+        
+        JsonValidationResult validationResult = ValidarProgramaCustomizado(input);
+        if(!validationResult.IsValid)
+        {
+            return BadRequest(new { success = false, message = "Não foi possível editar o programa." });
+        }
+
+        CustomProgramRepository.Update(input);
+        return Ok(new { success = true, message = "Programa atualizado com sucesso.", programa = input });
+    }
+
+    [HttpPost("delete-programa")]
+    [Authorize]
+    [IgnoreAntiforgeryToken]
+    public IActionResult DeletePrograma(string id)
+    {
+        if (string.IsNullOrEmpty(id))
+        {
+            return BadRequest(new { success = false, message = "ID do programa é obrigatório." });
+        }
+
+        CustomProgramRepository.Delete(id);
+        return Ok(new { success = true, message = "Programa removido com sucesso." });
+    }
+#endregion
+
+#region Atualização da Tela
+    [HttpGet("status")]
+    [Authorize]
+    public IActionResult StatusAtual()
+    {
+        var model = SessionHelper.GetStatusMicroondas(HttpContext);
+        
+        return Ok(new 
+        {
+            tempoFormatado = $"{model.TempoAquecimento / 60:D2}:{model.TempoAquecimento % 60:D2}",
+            display = model.Display,
+            status = model.Status,
+            instrucoes = model.Instrucoes,
+            isRunning = model.IsRunning(),
+            isPaused = model.IsPaused(),
+            ismodoAquecimentoPadrao = model.StatusEnum == StatusAquecimento.Aquecendo
+        });
+    }
+
+    [HttpPost("tick")]
+    [Authorize]
+    public IActionResult Tick()
+    {
+        var model = SessionHelper.GetStatusMicroondas(HttpContext);
+        
+        if (model.IsRunning() && !model.IsPaused() && model.TempoAquecimento > 0)
+        {
+            model.TempoAquecimento--;
+            model.Display += new string(model.CaractereProgresso, model.Potencia);
+            
+            if (model.TempoAquecimento <= 0)
+            {
+                model.StatusEnum = StatusAquecimento.Parado;
+                model.Display += " Aquecimento concluído!";
+            }
+        }
+        
+        SessionHelper.SetStatusMicroondas(HttpContext, model);
+        
+        return Ok(new 
+        {
+            tempoFormatado = $"{model.TempoAquecimento / 60:D2}:{model.TempoAquecimento % 60:D2}",
+            display = model.Display,
+            status = model.Status,
+            isRunning = model.IsRunning(),
+            isPaused = model.IsPaused()
+        });
+    }
+#endregion
 }

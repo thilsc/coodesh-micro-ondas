@@ -26,6 +26,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     {
         var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>()!;
         
+        if (jwtSettings == null || string.IsNullOrEmpty(jwtSettings.SecretKey))
+        {
+            throw new InvalidOperationException("A configuração 'Jwt' no appsettings.json está faltando ou incorreta.");
+        }
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,

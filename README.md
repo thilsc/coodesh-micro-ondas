@@ -1,33 +1,87 @@
 # Microondas Digital
 
-Esta é uma aplicação ASP.NET Core MVC que simula o painel e funcionalidades de um micro-ondas digital. Permite iniciar, pausar, retomar e parar o aquecimento, além de escolher receitas predefinidas ou programas customizados.
+Esta é uma aplicação ASP.NET Core MVC que simula o painel e funcionalidades de um micro-ondas digital. A arquitetura é composta por dois projetos: **MicroondasDigital** (servidor API) e **MicroondasCliente** (cliente web). Permite iniciar, pausar, retomar e parar o aquecimento, além de escolher receitas predefinidas ou programas customizados.
 
 ## Tecnologias
 
 - Linguagem: C#
 - Framework: .NET 10 (ASP.NET Core MVC)
 - Front‑end: Razor views + Bootstrap 5
-- Sem banco de dados (dados em memória/repositório estático)
+- Autenticação: JWT (JSON Web Tokens)
+- Sem banco de dados (gravação em arquivo JSON)
+
+## Arquitetura
+
+### MicroondasDigital (Servidor API)
+- Porta: `5161`
+- Responsável por gerenciar o estado do micro-ondas
+- Fornece endpoints REST com autenticação JWT
+- Mantém dados em sessão e repositório JSON
+
+### MicroondasCliente (Cliente Web)
+- Porta: `5200`
+- Interface web para operar o micro-ondas
+- Comunica-se com a API via HTTP
+- Armazena JWT Token na sessão
 
 ## Executando o projeto
 
-1. Certifique‑se de ter o [.NET 10 SDK](https://dotnet.microsoft.com/) instalado.
-2. Abra um terminal na raiz do repositório.
-3. Execute:
+### Pré-requisitos
+- [.NET 10 SDK](https://dotnet.microsoft.com/) instalado
+
+### Via Terminal
+
+1. **Compilar ambos os projetos:**
    ```bash
-   dotnet build MicroondasDigital/MicroondasDigital.csproj
+   dotnet build coodesh-micro-ondas.sln
+   ```
+
+2. **Executar o servidor (MicroondasDigital):**
+   ```bash
    dotnet run --project MicroondasDigital/MicroondasDigital.csproj
    ```
-4. Acesse `http://localhost:5161` no navegador.
+   Acesse `http://localhost:5161` (interface do painel)
 
-> O projeto também pode ser aberto em VS Code e executado usando as tasks `build`/`watch` configuradas.
+3. **Em outro terminal, executar o cliente (MicroondasCliente):**
+   ```bash
+   dotnet run --project MicroondasCliente/MicroondasCliente.csproj
+   ```
+   Acesse `http://localhost:5200` (interface do usuário)
 
-## Funcionalidades atuais
+## Funcionalidades
 
-- Validação de entrada de tempo e potência com mensagens customizadas.
-- Painel de status com contagem regressiva.
-- Receitas rápidas (pipoca, leite, carne, frango, feijão).
-- Programas customizados configuráveis e executáveis (lista carregada de `customPrograms.json`).
+### Autenticação
+- Login com JWT (padrão: `admin` / `123456`)
+- Token com expiração configurável (60 minutos)
+- Autorização em todos os endpoints da API
+
+### Controle do Micro-ondas
+-  Iniciar aquecimento manual (com tempo e potência configuráveis)
+- Início rápido (+30 segundos)
+- Pausar e retomar aquecimento
+- Parar aquecimento
+- Contagem regressiva em tempo real
+- Display com caracteres de progresso
+
+### Receitas Predefinidas
+- Pipoca (3 min, potência 7)
+- Leite (5 min, potência 5)
+- Carne (14 min, potência 4)
+- Frango (8 min, potência 7)
+- Feijão (8 min, potência 9)
+
+### Programas Customizados
+- Criar novos programas personalizados
+- Editar programas existentes
+- Deletar programas
+- Persistência em `customPrograms.json`
+- Configuração de tempo, potência e caractere de progresso
+
+### Validações
+- Validação de entrada de tempo (1-120 segundos para modo padrão)
+- Validação de potência (1-10)
+- Prevenção de duplicação de nomes e caracteres em programas customizados
+- Mensagens de erro customizadas
 
 ## Observações
 

@@ -2,8 +2,8 @@ namespace MicroondasDigital.Models;
 
 public class JwtSettings
 {
-    public string SecretKey { get; set; } = "MicroondasSuperSecretKey1234567890+"; // 256 bits
-    public string Issuer { get; set; } = "MicroondasDigital.API";
-    public string Audience { get; set; } = "MicroondasDigital.Client";
+    public string Issuer { get; set; } = string.Empty;
+    public string Audience { get; set; } = string.Empty;
+    public string SecretKey { get; set; } = string.Empty;
     public int ExpiryMinutes { get; set; } = 60;
 }
