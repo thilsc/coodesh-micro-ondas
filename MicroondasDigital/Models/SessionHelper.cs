@@ -12,7 +12,7 @@ public static class SessionHelper
 
         if(json != null)
         {
-            Console.WriteLine($"Obtenção das informações da Sessão => {json}");
+            //Console.WriteLine($"Obtenção das informações da Sessão => {json}");
 
             var model = JsonSerializer.Deserialize<MicroondasViewModel>(json);
 

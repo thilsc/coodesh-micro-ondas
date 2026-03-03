@@ -1,0 +1,144 @@
+==================================================
+Data/Hora : 2026-03-02 16:04:43.672
+Tipo      : System.NullReferenceException
+Mensagem  : Object reference not set to an instance of an object.
+StackTrace:
+   at Program.<>c__DisplayClass0_0.<<Main>$>b__1(JwtBearerOptions options) in /home/thiago/Documentos/src/coodesh-micro-ondas/MicroondasDigital/Program.cs:line 29
+   at Microsoft.Extensions.Options.OptionsFactory`1.Create(String name)
+   at System.Lazy`1.ViaFactory(LazyThreadSafetyMode mode)
+--- End of stack trace from previous location ---
+   at System.Lazy`1.CreateValue()
+   at Microsoft.Extensions.Options.OptionsCache`1.GetOrAdd[TArg](String name, Func`3 createOptions, TArg factoryArgument)
+   at Microsoft.AspNetCore.Authentication.AuthenticationHandler`1.InitializeAsync(AuthenticationScheme scheme, HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationHandlerProvider.GetHandlerAsync(HttpContext context, String authenticationScheme)
+   at Microsoft.AspNetCore.Authentication.AuthenticationService.AuthenticateAsync(HttpContext context, String scheme)
+   at Microsoft.AspNetCore.Authentication.AuthenticationServiceImpl.AuthenticateAsync(HttpContext context, String scheme)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at MicroondasDigital.Middleware.ExceptionHandlingMiddleware.Invoke(HttpContext context) in /home/thiago/Documentos/src/coodesh-micro-ondas/MicroondasDigital/Middleware/ExceptionHandlingMiddleware.cs:line 23
+
+==================================================
+Data/Hora : 2026-03-02 16:04:43.834
+Tipo      : System.NullReferenceException
+Mensagem  : Object reference not set to an instance of an object.
+StackTrace:
+   at Program.<>c__DisplayClass0_0.<<Main>$>b__1(JwtBearerOptions options) in /home/thiago/Documentos/src/coodesh-micro-ondas/MicroondasDigital/Program.cs:line 29
+   at Microsoft.Extensions.Options.OptionsFactory`1.Create(String name)
+   at System.Lazy`1.ViaFactory(LazyThreadSafetyMode mode)
+--- End of stack trace from previous location ---
+   at System.Lazy`1.CreateValue()
+   at Microsoft.Extensions.Options.OptionsCache`1.GetOrAdd[TArg](String name, Func`3 createOptions, TArg factoryArgument)
+   at Microsoft.AspNetCore.Authentication.AuthenticationHandler`1.InitializeAsync(AuthenticationScheme scheme, HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationHandlerProvider.GetHandlerAsync(HttpContext context, String authenticationScheme)
+   at Microsoft.AspNetCore.Authentication.AuthenticationService.AuthenticateAsync(HttpContext context, String scheme)
+   at Microsoft.AspNetCore.Authentication.AuthenticationServiceImpl.AuthenticateAsync(HttpContext context, String scheme)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at MicroondasDigital.Middleware.ExceptionHandlingMiddleware.Invoke(HttpContext context) in /home/thiago/Documentos/src/coodesh-micro-ondas/MicroondasDigital/Middleware/ExceptionHandlingMiddleware.cs:line 23
+
+==================================================
+Data/Hora : 2026-03-02 16:16:12.813
+Tipo      : System.NullReferenceException
+Mensagem  : Object reference not set to an instance of an object.
+StackTrace:
+   at Program.<>c__DisplayClass0_0.<<Main>$>b__1(JwtBearerOptions options) in /home/thiago/Documentos/src/coodesh-micro-ondas/MicroondasDigital/Program.cs:line 29
+   at Microsoft.Extensions.Options.OptionsFactory`1.Create(String name)
+   at System.Lazy`1.ViaFactory(LazyThreadSafetyMode mode)
+   at System.Lazy`1.ExecutionAndPublication(LazyHelper executionAndPublication, Boolean useDefaultConstructor)
+   at System.Lazy`1.CreateValue()
+   at Microsoft.Extensions.Options.OptionsCache`1.GetOrAdd[TArg](String name, Func`3 createOptions, TArg factoryArgument)
+   at Microsoft.AspNetCore.Authentication.AuthenticationHandler`1.InitializeAsync(AuthenticationScheme scheme, HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationHandlerProvider.GetHandlerAsync(HttpContext context, String authenticationScheme)
+   at Microsoft.AspNetCore.Authentication.AuthenticationService.AuthenticateAsync(HttpContext context, String scheme)
+   at Microsoft.AspNetCore.Authentication.AuthenticationServiceImpl.AuthenticateAsync(HttpContext context, String scheme)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at MicroondasDigital.Middleware.ExceptionHandlingMiddleware.Invoke(HttpContext context) in /home/thiago/Documentos/src/coodesh-micro-ondas/MicroondasDigital/Middleware/ExceptionHandlingMiddleware.cs:line 23
+
+==================================================
+Data/Hora : 2026-03-02 17:25:09.209
+Tipo      : System.InvalidOperationException
+Mensagem  : A configuração 'Jwt' no appsettings.json está faltando ou incorreta.
+StackTrace:
+   at Program.<>c__DisplayClass0_0.<<Main>$>b__1(JwtBearerOptions options) in /home/thiago/Documentos/src/coodesh-micro-ondas/MicroondasDigital/Program.cs:line 31
+   at Microsoft.Extensions.Options.OptionsFactory`1.Create(String name)
+   at System.Lazy`1.ViaFactory(LazyThreadSafetyMode mode)
+   at System.Lazy`1.ExecutionAndPublication(LazyHelper executionAndPublication, Boolean useDefaultConstructor)
+   at System.Lazy`1.CreateValue()
+   at Microsoft.Extensions.Options.OptionsCache`1.GetOrAdd[TArg](String name, Func`3 createOptions, TArg factoryArgument)
+   at Microsoft.AspNetCore.Authentication.AuthenticationHandler`1.InitializeAsync(AuthenticationScheme scheme, HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationHandlerProvider.GetHandlerAsync(HttpContext context, String authenticationScheme)
+   at Microsoft.AspNetCore.Authentication.AuthenticationService.AuthenticateAsync(HttpContext context, String scheme)
+   at Microsoft.AspNetCore.Authentication.AuthenticationServiceImpl.AuthenticateAsync(HttpContext context, String scheme)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at MicroondasDigital.Middleware.ExceptionHandlingMiddleware.Invoke(HttpContext context) in /home/thiago/Documentos/src/coodesh-micro-ondas/MicroondasDigital/Middleware/ExceptionHandlingMiddleware.cs:line 23
+
+==================================================
+Data/Hora : 2026-03-02 17:25:23.487
+Tipo      : System.InvalidOperationException
+Mensagem  : A configuração 'Jwt' no appsettings.json está faltando ou incorreta.
+StackTrace:
+   at Program.<>c__DisplayClass0_0.<<Main>$>b__1(JwtBearerOptions options) in /home/thiago/Documentos/src/coodesh-micro-ondas/MicroondasDigital/Program.cs:line 31
+   at Microsoft.Extensions.Options.OptionsFactory`1.Create(String name)
+   at System.Lazy`1.ViaFactory(LazyThreadSafetyMode mode)
+--- End of stack trace from previous location ---
+   at System.Lazy`1.CreateValue()
+   at Microsoft.Extensions.Options.OptionsCache`1.GetOrAdd[TArg](String name, Func`3 createOptions, TArg factoryArgument)
+   at Microsoft.AspNetCore.Authentication.AuthenticationHandler`1.InitializeAsync(AuthenticationScheme scheme, HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationHandlerProvider.GetHandlerAsync(HttpContext context, String authenticationScheme)
+   at Microsoft.AspNetCore.Authentication.AuthenticationService.AuthenticateAsync(HttpContext context, String scheme)
+   at Microsoft.AspNetCore.Authentication.AuthenticationServiceImpl.AuthenticateAsync(HttpContext context, String scheme)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at MicroondasDigital.Middleware.ExceptionHandlingMiddleware.Invoke(HttpContext context) in /home/thiago/Documentos/src/coodesh-micro-ondas/MicroondasDigital/Middleware/ExceptionHandlingMiddleware.cs:line 23
+
+==================================================
+Data/Hora : 2026-03-02 17:25:59.535
+Tipo      : System.InvalidOperationException
+Mensagem  : A configuração 'Jwt' no appsettings.json está faltando ou incorreta.
+StackTrace:
+   at Program.<>c__DisplayClass0_0.<<Main>$>b__1(JwtBearerOptions options) in /home/thiago/Documentos/src/coodesh-micro-ondas/MicroondasDigital/Program.cs:line 31
+   at Microsoft.Extensions.Options.OptionsFactory`1.Create(String name)
+   at System.Lazy`1.ViaFactory(LazyThreadSafetyMode mode)
+--- End of stack trace from previous location ---
+   at System.Lazy`1.CreateValue()
+   at Microsoft.Extensions.Options.OptionsCache`1.GetOrAdd[TArg](String name, Func`3 createOptions, TArg factoryArgument)
+   at Microsoft.AspNetCore.Authentication.AuthenticationHandler`1.InitializeAsync(AuthenticationScheme scheme, HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationHandlerProvider.GetHandlerAsync(HttpContext context, String authenticationScheme)
+   at Microsoft.AspNetCore.Authentication.AuthenticationService.AuthenticateAsync(HttpContext context, String scheme)
+   at Microsoft.AspNetCore.Authentication.AuthenticationServiceImpl.AuthenticateAsync(HttpContext context, String scheme)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at MicroondasDigital.Middleware.ExceptionHandlingMiddleware.Invoke(HttpContext context) in /home/thiago/Documentos/src/coodesh-micro-ondas/MicroondasDigital/Middleware/ExceptionHandlingMiddleware.cs:line 23
+
+==================================================
+Data/Hora : 2026-03-02 17:26:10.759
+Tipo      : System.InvalidOperationException
+Mensagem  : A configuração 'Jwt' no appsettings.json está faltando ou incorreta.
+StackTrace:
+   at Program.<>c__DisplayClass0_0.<<Main>$>b__1(JwtBearerOptions options) in /home/thiago/Documentos/src/coodesh-micro-ondas/MicroondasDigital/Program.cs:line 31
+   at Microsoft.Extensions.Options.OptionsFactory`1.Create(String name)
+   at System.Lazy`1.ViaFactory(LazyThreadSafetyMode mode)
+--- End of stack trace from previous location ---
+   at System.Lazy`1.CreateValue()
+   at Microsoft.Extensions.Options.OptionsCache`1.GetOrAdd[TArg](String name, Func`3 createOptions, TArg factoryArgument)
+   at Microsoft.AspNetCore.Authentication.AuthenticationHandler`1.InitializeAsync(AuthenticationScheme scheme, HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationHandlerProvider.GetHandlerAsync(HttpContext context, String authenticationScheme)
+   at Microsoft.AspNetCore.Authentication.AuthenticationService.AuthenticateAsync(HttpContext context, String scheme)
+   at Microsoft.AspNetCore.Authentication.AuthenticationServiceImpl.AuthenticateAsync(HttpContext context, String scheme)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at MicroondasDigital.Middleware.ExceptionHandlingMiddleware.Invoke(HttpContext context) in /home/thiago/Documentos/src/coodesh-micro-ondas/MicroondasDigital/Middleware/ExceptionHandlingMiddleware.cs:line 23
+
+==================================================
+Data/Hora : 2026-03-02 17:27:07.944
+Tipo      : System.InvalidOperationException
+Mensagem  : A configuração 'Jwt' no appsettings.json está faltando ou incorreta.
+StackTrace:
+   at Program.<>c__DisplayClass0_0.<<Main>$>b__1(JwtBearerOptions options) in /home/thiago/Documentos/src/coodesh-micro-ondas/MicroondasDigital/Program.cs:line 31
+   at Microsoft.Extensions.Options.OptionsFactory`1.Create(String name)
+   at System.Lazy`1.ViaFactory(LazyThreadSafetyMode mode)
+--- End of stack trace from previous location ---
+   at System.Lazy`1.CreateValue()
+   at Microsoft.Extensions.Options.OptionsCache`1.GetOrAdd[TArg](String name, Func`3 createOptions, TArg factoryArgument)
+   at Microsoft.AspNetCore.Authentication.AuthenticationHandler`1.InitializeAsync(AuthenticationScheme scheme, HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationHandlerProvider.GetHandlerAsync(HttpContext context, String authenticationScheme)
+   at Microsoft.AspNetCore.Authentication.AuthenticationService.AuthenticateAsync(HttpContext context, String scheme)
+   at Microsoft.AspNetCore.Authentication.AuthenticationServiceImpl.AuthenticateAsync(HttpContext context, String scheme)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at MicroondasDigital.Middleware.ExceptionHandlingMiddleware.Invoke(HttpContext context) in /home/thiago/Documentos/src/coodesh-micro-ondas/MicroondasDigital/Middleware/ExceptionHandlingMiddleware.cs:line 23
+

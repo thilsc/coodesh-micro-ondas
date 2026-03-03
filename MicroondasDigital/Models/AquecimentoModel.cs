@@ -6,35 +6,14 @@ namespace MicroondasDigital.Models;
 
 public class AquecimentoModel
 {
-    private readonly Controller _parentController;
-    private static string FormatTempo(int tempo)
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public AquecimentoModel(IHttpContextAccessor httpContextAccessor)
     {
-        if (tempo >= 3600)
-        {
-            int hours = tempo / 3600;
-            int remainder = tempo % 3600;
-            int minutes = remainder / 60;
-            int seconds = remainder % 60;
-            return $"{hours:D1}:{minutes:D2}:{seconds:D2}";
-        }
-        else
-        {
-            return $"{tempo / 60:D2}:{tempo % 60:D2}";
-        }
+        _httpContextAccessor = httpContextAccessor;
     }
 
-    public AquecimentoModel(Controller controller)
-    {
-        _parentController = controller;
-    }
-
-#region Rotinas de Processamento e Gravação do Estado do Microondas
-
-    private HttpContext GetContext()
-    {
-        return _parentController.HttpContext;
-    }
-
+    private HttpContext GetContext() => _httpContextAccessor.HttpContext!;
     private MicroondasViewModel GetStatusMicroondas()
     {
         return SessionHelper.GetStatusMicroondas(GetContext());
@@ -57,6 +36,22 @@ public class AquecimentoModel
         model.StatusEnum = status;
 
         SetStatusMicroondas(model);
+    }
+
+    private static string FormatTempo(int tempo)
+    {
+        if (tempo >= 3600)
+        {
+            int hours = tempo / 3600;
+            int remainder = tempo % 3600;
+            int minutes = remainder / 60;
+            int seconds = remainder % 60;
+            return $"{hours:D1}:{minutes:D2}:{seconds:D2}";
+        }
+        else
+        {
+            return $"{tempo / 60:D2}:{tempo % 60:D2}";
+        }
     }
 
     private object GetViewObjectStatusMicroondas(MicroondasViewModel model)
@@ -200,6 +195,4 @@ public class AquecimentoModel
 
         return GetViewObjectStatusMicroondas(model);
     }    
-#endregion
-
 }

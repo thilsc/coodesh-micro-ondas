@@ -1,0 +1,50 @@
+@model MicroondasCliente.Models.AquecimentoCustomizadoModel
+
+<div class="modal" tabindex="-1" id="programModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="programForm" asp-action="@(string.IsNullOrEmpty(Model.Id) ? "CriarProgramaCustomizado" : "EditarPrograma")" method="post">
+        <input asp-for="Id" type="hidden" />
+        <div class="modal-header">
+           <h5 class="modal-title">@((string.IsNullOrEmpty(Model.Id)) ? "Novo Programa" : "Editar Programa")</h5>
+           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <div class="mb-3">
+                <label asp-for="Nome" class="form-label">Nome</label>
+                <input asp-for="Nome" class="form-control" required />
+                <span asp-validation-for="Nome" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Alimento" class="form-label">Alimento</label>
+                <input asp-for="Alimento" class="form-control" required />
+                <span asp-validation-for="Alimento" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Tempo" class="form-label">Tempo (segundos)</label>
+                <input asp-for="Tempo" type="number" min="1" class="form-control" value="@Model.Tempo" required />
+                <span asp-validation-for="Tempo" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Potencia" class="form-label">Potência</label>
+                <input asp-for="Potencia" type="number" min="1" max="@MicroondasCliente.Models.Constants.PotenciaMax" class="form-control" required />
+                <span asp-validation-for="Potencia" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="CaractereProgresso" class="form-label">Caractere de Progresso</label>
+                <input asp-for="CaractereProgresso" maxlength="1" class="form-control" required />
+                <span asp-validation-for="CaractereProgresso" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Instrucoes" class="form-label">Instruções</label>
+                <textarea asp-for="Instrucoes" class="form-control"></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,33 @@
+@model IEnumerable<MicroondasCliente.Models.AquecimentoCustomizadoModel>
+
+<div>
+    <button id="btnNewProgram" class="btn btn-secondary mb-2">Criar novo programa</button>
+    <table class="table table-sm">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Alimento</th>
+                <th>Tempo</th>
+                <th>Potência</th>
+                <th>Char</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach(var p in Model)
+            {
+                <tr>
+                    <td>@p.Nome</td>
+                    <td>@p.Alimento</td>
+                    <td>@p.Tempo</td>
+                    <td>@p.Potencia</td>
+                    <td>@p.CaractereProgresso</td>
+                    <td>
+                        <button type="button" data-id="@p.Id" class="btn btn-sm btn-link editProgram">Editar</button>
+                        <button type="button" data-id="@p.Id" class="btn btn-sm btn-link text-danger deleteProgram">Excluir</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

@@ -1,0 +1,15 @@
+@model IEnumerable<MicroondasCliente.Models.AquecimentoCustomizadoModel>
+
+<div class="modal" tabindex="-1" id="programListModal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Programas Customizados</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <partial name="_CustomProgramList" model="Model" />
+      </div>
+    </div>
+  </div>
+</div>
